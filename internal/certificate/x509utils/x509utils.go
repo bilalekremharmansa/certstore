@@ -19,7 +19,7 @@ func GetRandomCertificateSerialNumber() (*big.Int, error) {
 	return serialNumber, nil
 }
 
-func EncodePEMCertAndKey(cert []byte, privateKey *rsa.PrivateKey) (*bytes.Buffer, *bytes.Buffer) {
+func EncodePEMCertAndKey(privateKey *rsa.PrivateKey, cert []byte) (*bytes.Buffer, *bytes.Buffer) {
 	privateKeyPem := new(bytes.Buffer)
 	pem.Encode(privateKeyPem, &pem.Block{
 		Type:  "RSA PRIVATE KEY",

@@ -58,7 +58,7 @@ func (service *CACertificateService) CreateCertificate(request *NewCertificateRe
 
 	// ----- pem encode
 
-	caPrivateKeyPem, caPem := x509utils.EncodePEMCertAndKey(caBytes, caPrivateKey)
+	caPrivateKeyPem, caPem := x509utils.EncodePEMCertAndKey(caPrivateKey, caBytes)
 
 	// ------
 

@@ -1,184 +1,31 @@
 package service
 
 import (
-	"regexp"
-	"strings"
 	"testing"
-	"time"
 
 	"crypto/x509"
-	"encoding/pem"
 )
 
-func TestISCA(t *testing.T) {
+func TestCA_ISCA(t *testing.T) {
+	var service CertificateService = createCertificateService()
 	request := &NewCertificateRequest{
 		CommonName:     "my-ca",
 		ExpirationDays: 365,
 	}
-	response := createCert(t, request)
+	response := createCert(t, &service, request)
 	cert := parsePEMToX509Certificate(response.Certificate)
 	if !cert.IsCA {
 		t.Fatal("Certificate is not CA")
 	}
 }
 
-func TestEmail(t *testing.T) {
-	email := "test@mail.com"
-
-	request := &NewCertificateRequest{
-		CommonName:     "my-ca",
-		Email:          email,
-		ExpirationDays: 365,
-	}
-	response := createCert(t, request)
-	cert := parsePEMToX509Certificate(response.Certificate)
-
-	if len(cert.EmailAddresses) == 0 || cert.EmailAddresses[0] != email {
-		t.Fatalf("Email address is not correct, expected: [%s] found: [%s] \n", email, cert.EmailAddresses)
-	}
-}
-
-func TestNotValidEmail(t *testing.T) {
-	email := "test"
-
-	request := &NewCertificateRequest{
-		CommonName:     "my-ca",
-		Email:          email,
-		ExpirationDays: 365,
-	}
-	caCertService := CACertificateService{}
-	_, err := caCertService.CreateCertificate(request)
-	if !(err != nil && strings.Contains(err.Error(), "Validation error: email")) {
-		t.Fatalf("provided not valid email, but expected error not raised error: [%v]", err)
-	}
-}
-
-func TestSubject(t *testing.T) {
-	commonName := "my-ca"
-	email := "test@mail.com"
-	organization := "my-org"
-
-	request := &NewCertificateRequest{
-		CommonName:     commonName,
-		Email:          email,
-		Organization:   organization,
-		ExpirationDays: 365,
-	}
-	response := createCert(t, request)
-	cert := parsePEMToX509Certificate(response.Certificate)
-
-	subject := cert.Subject
-	if subject.CommonName != commonName {
-		t.Fatalf("Common name is not correct, expected: [%s] found: [%s] \n", commonName, subject.CommonName)
-	}
-
-	if len(subject.Organization) == 0 || subject.Organization[0] != organization {
-		t.Fatalf("Organization name is not correct, expected: [%s] found: [%s] \n", organization, subject.Organization)
-	}
-}
-
-func TestNotProvidedCommonName(t *testing.T) {
-	request := &NewCertificateRequest{
-		ExpirationDays: 365,
-	}
-	caCertService := CACertificateService{}
-	_, err := caCertService.CreateCertificate(request)
-	if !(err != nil && strings.Contains(err.Error(), "Validation error: common name")) {
-		t.Fatalf("provided not valid email, but error proper error not raised error: [%v]", err)
-	}
-}
-
-func TestUniqueSerialNumber(t *testing.T) {
-	request := &NewCertificateRequest{
-		CommonName:     "my-ca",
-		ExpirationDays: 365,
-	}
-	firstResponse := createCert(t, request)
-	secondResponse := createCert(t, request)
-
-	firstCert := parsePEMToX509Certificate(firstResponse.Certificate)
-	secondCert := parsePEMToX509Certificate(secondResponse.Certificate)
-
-	if firstCert.SerialNumber == secondCert.SerialNumber {
-		t.Fatalf("Sequentially created two certs' serial numbers are same, should've been different. first: [%s], second: [%s]",
-			firstCert.SerialNumber.String(), secondCert.SerialNumber.String())
-	}
-}
-
-func TestExpirationDate(t *testing.T) {
-	expirationDays := 742
-	beforeExpirationDate := time.Now().AddDate(0, 0, expirationDays)
-
-	// ----
-
-	request := &NewCertificateRequest{
-		CommonName:     "my-ca",
-		ExpirationDays: expirationDays,
-	}
-	response := createCert(t, request)
-	cert := parsePEMToX509Certificate(response.Certificate)
-
-	// ---
-
-	certExpireDate := cert.NotAfter
-	afterExpirationDate := time.Now().AddDate(0, 0, expirationDays)
-
-	if certExpireDate.After(beforeExpirationDate) && certExpireDate.Before(afterExpirationDate) {
-		t.Fatalf("Expiration date is not correct, expected [%d] days later, found: [%s] \n", expirationDays, certExpireDate)
-	}
-}
-
-func TestNotValidExpirationDate(t *testing.T) {
-	request := &NewCertificateRequest{
-		CommonName:     "my-ca",
-		ExpirationDays: 0,
-	}
-	caCertService := CACertificateService{}
-	_, err := caCertService.CreateCertificate(request)
-	if !(err != nil && strings.Contains(err.Error(), "Validation error: expiration days")) {
-		t.Fatalf("provided not valid expiration date, must be bigger than 1: [%v]", err)
-	}
-}
-
-func TestNotProvidedExpirationDate(t *testing.T) {
-	request := &NewCertificateRequest{
-		CommonName: "my-ca",
-	}
-	caCertService := CACertificateService{}
-	_, err := caCertService.CreateCertificate(request)
-	if !(err != nil && strings.Contains(err.Error(), "Validation error: expiration days")) {
-		t.Fatalf("provided not valid expiration date, must be bigger than 1: [%v]", err)
-	}
-}
-
-func TestStartDate(t *testing.T) {
-	beforeCreateCert := time.Now()
-
-	// ----
-
+func TestCA_KeyUsageCertSign(t *testing.T) {
+	var service CertificateService = createCertificateService()
 	request := &NewCertificateRequest{
 		CommonName:     "my-ca",
 		ExpirationDays: 5,
 	}
-	response := createCert(t, request)
-	cert := parsePEMToX509Certificate(response.Certificate)
-
-	// ---
-
-	certExpireDate := cert.NotBefore
-	afterCreateCert := time.Now()
-
-	if certExpireDate.After(beforeCreateCert) && cert.NotAfter.Before(afterCreateCert) {
-		t.Fatalf("Start date is not correct, should've been now but: [%s] \n", certExpireDate)
-	}
-}
-
-func TestKeyUsageCertSign(t *testing.T) {
-	request := &NewCertificateRequest{
-		CommonName:     "my-ca",
-		ExpirationDays: 5,
-	}
-	response := createCert(t, request)
+	response := createCert(t, &service, request)
 	cert := parsePEMToX509Certificate(response.Certificate)
 
 	if (cert.KeyUsage & x509.KeyUsageDigitalSignature) != x509.KeyUsageDigitalSignature {
@@ -190,61 +37,65 @@ func TestKeyUsageCertSign(t *testing.T) {
 	}
 }
 
-func TestCertificate(t *testing.T) {
-	request := &NewCertificateRequest{
-		CommonName:     "my-ca",
-		ExpirationDays: 365,
-	}
-	response := createCert(t, request)
-	certificateStr := string(response.Certificate)
+// ----- common certificate service tests
 
-	pattern := "-----BEGIN CERTIFICATE-----(\n.*)*----END CERTIFICATE-----\n"
-	re := regexp.MustCompile(pattern)
-	matched := re.MatchString(certificateStr)
-	if !matched {
-		t.Fatalf("expected [%s] but found [%s]", pattern, certificateStr)
-	}
+func TestCA_Email(t *testing.T) {
+	var service CertificateService = createCertificateService()
+	testEmail(t, &service)
 }
 
-func createCert(t *testing.T, request *NewCertificateRequest) *NewCertificateResponse {
-	caCertService := CACertificateService{}
-	response, err := caCertService.CreateCertificate(request)
-	if err != nil {
-		t.Fatalf("cert creation failed %v", err)
-	}
-	return response
+func TestCA_NotValidEmail(t *testing.T) {
+	var service CertificateService = createCertificateService()
+	testNotValidEmail(t, &service)
 }
 
-func TestPrivateKey(t *testing.T) {
-	caCertService := CACertificateService{}
-
-	request := &NewCertificateRequest{
-		CommonName:     "my-ca",
-		ExpirationDays: 365,
-	}
-	response, _ := caCertService.CreateCertificate(request)
-	privateKeyStr := string(response.PrivateKey)
-
-	pattern := "-----BEGIN RSA PRIVATE KEY-----(\n.*)*----END RSA PRIVATE KEY-----\n"
-	re := regexp.MustCompile(pattern)
-	matched := re.MatchString(privateKeyStr)
-	if !matched {
-		t.Fatalf("expected [%s] but found [%s]", pattern, privateKeyStr)
-	}
+func TestCA_Subject(t *testing.T) {
+	var service CertificateService = createCertificateService()
+	testSubject(t, &service)
 }
 
-// -----
+func TestCA_NotProvidedCommonName(t *testing.T) {
+	var service CertificateService = createCertificateService()
+	testNotProvidedCommonName(t, &service)
+}
 
-func parsePEMToX509Certificate(certPem []byte) *x509.Certificate {
-	block, _ := pem.Decode(certPem)
-	if block == nil {
-		panic("failed to parse certificate PEM")
-	}
+func TestCA_UniqueSerialNumber(t *testing.T) {
+	var service CertificateService = createCertificateService()
+	testUniqueSerialNumber(t, &service)
+}
 
-	cert, err := x509.ParseCertificate(block.Bytes)
-	if err != nil {
-		panic("failed to parse certificate: " + err.Error())
-	}
+func TestCA_ExpirationDate(t *testing.T) {
+	var service CertificateService = createCertificateService()
+	testExpirationDate(t, &service)
+}
 
-	return cert
+func TestCA_NotValidExpirationDate(t *testing.T) {
+	var service CertificateService = createCertificateService()
+	testNotValidExpirationDate(t, &service)
+}
+
+func TestCA_NotProvidedExpirationDate(t *testing.T) {
+	var service CertificateService = createCertificateService()
+	testNotProvidedExpirationDate(t, &service)
+}
+
+func TestCA_StartDate(t *testing.T) {
+	var service CertificateService = createCertificateService()
+	testStartDate(t, &service)
+}
+
+func TestCA_Certificate(t *testing.T) {
+	var service CertificateService = createCertificateService()
+	testCertificate(t, &service)
+}
+
+func TestCA_RSAPrivateKey(t *testing.T) {
+	var service CertificateService = createCertificateService()
+	testRSAPrivateKey(t, &service)
+}
+
+// ------
+
+func createCertificateService() *CACertificateService {
+	return &CACertificateService{}
 }
