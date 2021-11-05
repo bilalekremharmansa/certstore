@@ -2,6 +2,7 @@ package service
 
 import (
 	"bilalekrem.com/certstore/internal/certificate/x509utils"
+	"bilalekrem.com/certstore/internal/logging"
 
 	"crypto/rand"
 	"crypto/rsa"
@@ -16,6 +17,7 @@ type CACertificateService struct {
 func (service *CACertificateService) CreateCertificate(request *NewCertificateRequest) (*NewCertificateResponse, error) {
 	err := validateCertificateRequest(request)
 	if err != nil {
+		logging.GetLogger().Debug("validating ca certificate request failed: [%v]", err)
 		return nil, err
 	}
 
@@ -23,6 +25,7 @@ func (service *CACertificateService) CreateCertificate(request *NewCertificateRe
 
 	serialNumber, err := x509utils.GetRandomCertificateSerialNumber()
 	if err != nil {
+		logging.GetLogger().Debug("creating cert serial number failed: [%v]", err)
 		return nil, err
 	}
 
@@ -42,19 +45,23 @@ func (service *CACertificateService) CreateCertificate(request *NewCertificateRe
 	}
 
 	// ----
-
+	logging.GetLogger().Debug("Generating private key for CA")
 	caPrivateKey, err := rsa.GenerateKey(rand.Reader, 4096)
 	if err != nil {
+		logging.GetLogger().Debug("generating ca private key failed: [%v]", err)
 		return nil, err
 	}
 
+	logging.GetLogger().Debug("Creating CA key")
 	caBytes, err := x509.CreateCertificate(rand.Reader, ca, ca, &caPrivateKey.PublicKey, caPrivateKey)
 	if err != nil {
+		logging.GetLogger().Debug("creating ca cert failed: [%v]", err)
 		return nil, err
 	}
 
 	// ----- pem encode
 
+	logging.GetLogger().Debug("Encoding certificate and key")
 	caPrivateKeyPem, caPem := x509utils.EncodePEMCertAndKey(caPrivateKey, caBytes)
 
 	// ------

@@ -1,6 +1,9 @@
 package certstore
 
-import "bilalekrem.com/certstore/internal/certificate/service"
+import (
+	"bilalekrem.com/certstore/internal/certificate/service"
+	"bilalekrem.com/certstore/internal/logging"
+)
 
 type certStoreImpl struct {
 	caCertService *service.CACertificateService
@@ -21,6 +24,7 @@ func (c *certStoreImpl) CreateClusterCACertificate(clusterName string) (*service
 		CommonName: clusterName,
 		ExpirationDays: DEFAULT_CLUSTER_CERT_EXPIRATION_DAYS,
 	}
+	logging.GetLogger().Debug("creating cluster ca certificate")
 	response, err := c.caCertService.CreateCertificate(request)
 	if err != nil {
 		return nil, err
