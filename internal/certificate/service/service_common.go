@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"fmt"
 	"net/mail"
 )
 
@@ -10,10 +11,10 @@ func validateCertificateRequest(req *NewCertificateRequest) error {
 		return errors.New("Validation error: common name can not be empty")
 	}
 
-	if req.Email != "" {
-		_, err := mail.ParseAddress(req.Email)
+	for _, email := range req.Email {
+		_, err := mail.ParseAddress(email)
 		if err != nil {
-			return errors.New("Validation error: email is not valid")
+			return errors.New(fmt.Sprintf("Validation error: email is not valid: [%s]", email))
 		}
 	}
 

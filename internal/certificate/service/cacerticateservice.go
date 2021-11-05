@@ -30,9 +30,9 @@ func (service *CACertificateService) CreateCertificate(request *NewCertificateRe
 		SerialNumber: serialNumber,
 		Subject: pkix.Name{
 			CommonName:   request.CommonName,
-			Organization: []string{request.Organization},
+			Organization: request.Organization,
 		},
-		EmailAddresses:        []string{request.Email},
+		EmailAddresses:        request.Email,
 		NotBefore:             time.Now(),
 		NotAfter:              time.Now().AddDate(0, 0, request.ExpirationDays),
 		IsCA:                  true,

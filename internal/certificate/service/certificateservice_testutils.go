@@ -1,6 +1,7 @@
 package service
 
 import (
+	"reflect"
 	"regexp"
 	"strings"
 	"testing"
@@ -12,7 +13,7 @@ import (
 )
 
 func testEmail(t *testing.T, service *CertificateService) {
-	email := "test@mail.com"
+	email := []string{"test@mail.com"}
 
 	request := &NewCertificateRequest{
 		CommonName:     "my-ca",
@@ -22,13 +23,13 @@ func testEmail(t *testing.T, service *CertificateService) {
 	response := createCert(t, service, request)
 	cert := parsePEMToX509Certificate(t, response.Certificate)
 
-	if len(cert.EmailAddresses) == 0 || cert.EmailAddresses[0] != email {
+	if len(cert.EmailAddresses) == 0 || !reflect.DeepEqual(cert.EmailAddresses, email) {
 		t.Fatalf("Email address is not correct, expected: [%s] found: [%s] \n", email, cert.EmailAddresses)
 	}
 }
 
 func testNotValidEmail(t *testing.T, service *CertificateService) {
-	email := "test"
+	email := []string{"test"}
 
 	request := &NewCertificateRequest{
 		CommonName:     "my-ca",
@@ -43,8 +44,8 @@ func testNotValidEmail(t *testing.T, service *CertificateService) {
 
 func testSubject(t *testing.T, service *CertificateService) {
 	commonName := "my-ca"
-	email := "test@mail.com"
-	organization := "my-org"
+	email := []string{"test@mail.com"}
+	organization := []string{"my-org"}
 
 	request := &NewCertificateRequest{
 		CommonName:     commonName,
@@ -60,7 +61,7 @@ func testSubject(t *testing.T, service *CertificateService) {
 		t.Fatalf("Common name is not correct, expected: [%s] found: [%s] \n", commonName, subject.CommonName)
 	}
 
-	if len(subject.Organization) == 0 || subject.Organization[0] != organization {
+	if len(subject.Organization) == 0 || !reflect.DeepEqual(subject.Organization, organization) {
 		t.Fatalf("Organization name is not correct, expected: [%s] found: [%s] \n", organization, subject.Organization)
 	}
 }

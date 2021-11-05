@@ -2,8 +2,8 @@ package service
 
 type NewCertificateRequest struct {
 	CommonName     string
-	Email          string
-	Organization   string
+	Email          []string
+	Organization   []string
 	ExpirationDays int
 
 	SubjectAlternativeNames []string

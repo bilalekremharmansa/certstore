@@ -55,9 +55,9 @@ func (service *certificateServiceImpl) CreateCertificate(request *NewCertificate
 		SerialNumber: serialNumber,
 		Subject: pkix.Name{
 			CommonName:   request.CommonName,
-			Organization: []string{request.Organization},
+			Organization: request.Organization,
 		},
-		EmailAddresses: []string{request.Email},
+		EmailAddresses: request.Email,
 		DNSNames:       request.SubjectAlternativeNames,
 		NotBefore:      time.Now(),
 		NotAfter:       time.Now().AddDate(0, 0, request.ExpirationDays),
