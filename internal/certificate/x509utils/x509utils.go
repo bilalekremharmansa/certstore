@@ -7,6 +7,7 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"math/big"
+	"errors"
 )
 
 func GetRandomCertificateSerialNumber() (*big.Int, error) {
@@ -35,4 +36,31 @@ func EncodePEMCertAndKey(privateKey *rsa.PrivateKey, cert []byte) (*bytes.Buffer
 	})
 
 	return privateKeyPem, certPem
+}
+
+func ParsePemPrivateKey(privateKeyBytes []byte) (*rsa.PrivateKey, error) {
+	block, _ := pem.Decode(privateKeyBytes)
+	if block == nil {
+		return nil, errors.New("decoding pem failed for private key")
+	}
+	privateKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+	if err != nil {
+		return nil, err
+	}
+
+	return privateKey, nil
+}
+
+func ParsePemCertificate(certPem []byte) (*x509.Certificate, error) {
+	block, _ := pem.Decode(certPem)
+	if block == nil {
+		return nil, errors.New("decoding pem failed for certificate")
+	}
+
+	cert, err := x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		return nil, err
+	}
+
+	return cert, nil
 }

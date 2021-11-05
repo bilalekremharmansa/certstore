@@ -7,7 +7,8 @@ import (
 	"time"
 
 	"crypto/x509"
-	"encoding/pem"
+
+	"bilalekrem.com/certstore/internal/certificate/x509utils"
 )
 
 func testEmail(t *testing.T, service *CertificateService) {
@@ -19,7 +20,7 @@ func testEmail(t *testing.T, service *CertificateService) {
 		ExpirationDays: 365,
 	}
 	response := createCert(t, service, request)
-	cert := parsePEMToX509Certificate(response.Certificate)
+	cert := parsePEMToX509Certificate(t, response.Certificate)
 
 	if len(cert.EmailAddresses) == 0 || cert.EmailAddresses[0] != email {
 		t.Fatalf("Email address is not correct, expected: [%s] found: [%s] \n", email, cert.EmailAddresses)
@@ -52,7 +53,7 @@ func testSubject(t *testing.T, service *CertificateService) {
 		ExpirationDays: 365,
 	}
 	response := createCert(t, service, request)
-	cert := parsePEMToX509Certificate(response.Certificate)
+	cert := parsePEMToX509Certificate(t, response.Certificate)
 
 	subject := cert.Subject
 	if subject.CommonName != commonName {
@@ -82,8 +83,8 @@ func testUniqueSerialNumber(t *testing.T, service *CertificateService) {
 	firstResponse := createCert(t, service, request)
 	secondResponse := createCert(t, service, request)
 
-	firstCert := parsePEMToX509Certificate(firstResponse.Certificate)
-	secondCert := parsePEMToX509Certificate(secondResponse.Certificate)
+	firstCert := parsePEMToX509Certificate(t, firstResponse.Certificate)
+	secondCert := parsePEMToX509Certificate(t, secondResponse.Certificate)
 
 	if firstCert.SerialNumber == secondCert.SerialNumber {
 		t.Fatalf("Sequentially created two certs' serial numbers are same, should've been different. first: [%s], second: [%s]",
@@ -102,7 +103,7 @@ func testExpirationDate(t *testing.T, service *CertificateService) {
 		ExpirationDays: expirationDays,
 	}
 	response := createCert(t, service, request)
-	cert := parsePEMToX509Certificate(response.Certificate)
+	cert := parsePEMToX509Certificate(t, response.Certificate)
 
 	// ---
 
@@ -146,7 +147,7 @@ func testStartDate(t *testing.T, service *CertificateService) {
 		ExpirationDays: 5,
 	}
 	response := createCert(t, service, request)
-	cert := parsePEMToX509Certificate(response.Certificate)
+	cert := parsePEMToX509Certificate(t, response.Certificate)
 
 	// ---
 
@@ -192,15 +193,10 @@ func testRSAPrivateKey(t *testing.T, service *CertificateService) {
 
 // ---
 
-func parsePEMToX509Certificate(certPem []byte) *x509.Certificate {
-	block, _ := pem.Decode(certPem)
-	if block == nil {
-		panic("failed to parse certificate PEM")
-	}
-
-	cert, err := x509.ParseCertificate(block.Bytes)
+func parsePEMToX509Certificate(t *testing.T, certPem []byte) *x509.Certificate {
+	cert, err := x509utils.ParsePemCertificate(certPem)
 	if err != nil {
-		panic("failed to parse certificate: " + err.Error())
+		t.Fatalf("parsing certificate failed")
 	}
 
 	return cert
