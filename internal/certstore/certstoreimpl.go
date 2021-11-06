@@ -57,6 +57,7 @@ func (c *certStoreImpl) CreateServerCertificate(advertisedServerName string) (*s
 	request := &service.NewCertificateRequest{
 		CommonName: advertisedServerName,
 		ExpirationDays: DEFAULT_CLUSTER_CERT_EXPIRATION_DAYS,
+		SubjectAlternativeNames: []string{advertisedServerName},
 	}
 
 	logging.GetLogger().Debugf("creating server certificate for %s\n", advertisedServerName)
@@ -76,6 +77,7 @@ func (c *certStoreImpl) CreateWorkerCertificate(address string) (*service.NewCer
 	request := &service.NewCertificateRequest{
 		CommonName: address,
 		ExpirationDays: DEFAULT_CLUSTER_CERT_EXPIRATION_DAYS,
+		SubjectAlternativeNames: []string{address},
 	}
 
 	logging.GetLogger().Debugf("creating worker certificate for %s\n", address)
