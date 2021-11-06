@@ -9,6 +9,7 @@ import (
 	"bilalekrem.com/certstore/internal/logging"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/reflection"
 )
 
@@ -42,6 +43,8 @@ var clusterServerStartCmd = &cobra.Command{
 	Short: "start server",
 	Run: func(cmd *cobra.Command, args []string) {
 		port, _ := cmd.Flags().GetInt("port")
+		certPath, _ := cmd.Flags().GetString("cert")
+		certKeyPath, _ := cmd.Flags().GetString("certkey")
 
 		// ----
 
@@ -50,6 +53,12 @@ var clusterServerStartCmd = &cobra.Command{
 			error("error occurred while listening port, %v", err)
 		}
 		var opts []grpc.ServerOption
+		creds, err := credentials.NewServerTLSFromFile(certPath, certKeyPath)
+		if err != nil {
+			error("Failed to generate credentials %v", err)
+		}
+
+		opts = []grpc.ServerOption{grpc.Creds(creds)}
 		grpcServer := grpc.NewServer(opts...)
 		pb.RegisterHelloServiceServer(grpcServer, server.NewHelloService())
 		reflection.Register(grpcServer)
@@ -68,6 +77,10 @@ func init() {
 	// ------
 
 	clusterServerStartCmd.Flags().Int("port", 10000, "listen port")
+	clusterServerStartCmd.Flags().String("cert", "", "x509 certificate file for mTLS")
+	clusterServerStartCmd.Flags().String("certkey", "", "x509 private key file for mTLS")
+	clusterServerStartCmd.MarkFlagRequired("cert")
+	clusterServerStartCmd.MarkFlagRequired("certkey")
 
 	// ------
 

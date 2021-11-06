@@ -8,6 +8,7 @@ import (
 	"bilalekrem.com/certstore/internal/logging"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
 var clusterWorkerCmd = &cobra.Command{
@@ -40,12 +41,16 @@ var clusterWorkerStartCmd = &cobra.Command{
 	Short: "communicat with server",
 	Run: func(cmd *cobra.Command, args []string) {
 		serverAddress, _ := cmd.Flags().GetString("server-address")
+		caCertPath, _ := cmd.Flags().GetString("cacert")
 
 		// -----
 
 		var opts []grpc.DialOption
-		opts = append(opts, grpc.WithInsecure())
-
+		creds, err := credentials.NewClientTLSFromFile(caCertPath, "")
+		if err != nil {
+			error("Failed to create TLS credentials %v", err)
+		}
+		opts = append(opts, grpc.WithTransportCredentials(creds))
 		conn, err := grpc.Dial(serverAddress, opts...)
 		if err != nil {
 			error("fail to dial gRPC server: %v", err)
@@ -57,7 +62,10 @@ var clusterWorkerStartCmd = &cobra.Command{
 		request := &pb.HelloRequest{
 			Name: "certstore!",
 		}
-		response, _ := client.SayHello(context.Background(), request)
+		response, err := client.SayHello(context.Background(), request)
+		if err != nil {
+			error("error occurred communicating server: %v", err)
+		}
 		fmt.Println(response.Message)
 	},
 }
@@ -72,7 +80,9 @@ func init() {
 
 	// ------
 	clusterWorkerStartCmd.Flags().String("server-address", "", "server address to communicate")
+	clusterWorkerStartCmd.Flags().String("cacert", "", "CA certificate file for verifying the server")
 	clusterWorkerStartCmd.MarkFlagRequired("server-address")
+	clusterWorkerStartCmd.MarkFlagRequired("cacert")
 
 	clusterCmd.AddCommand(clusterWorkerCmd)
 	clusterWorkerCmd.AddCommand(clusterWorkerCreateCertCmd)
