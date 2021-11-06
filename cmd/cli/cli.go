@@ -1,9 +1,11 @@
 package cli
 
 import (
+	"os"
+
 	"github.com/spf13/cobra"
 
-	"bilalekrem.com/certstore/internal/certstore"
+	"bilalekrem.com/certstore/internal/logging"
 )
 
 var (
@@ -12,10 +14,15 @@ var (
 		Short: "",
 		Long:  ``,
 	}
-
-	certStore, _ = certstore.New()
 )
 
 func Run() {
 	rootCmd.Execute()
+}
+
+// ----
+
+func error(template string, args ...interface{}) {
+	logging.GetLogger().Errorf(template, args)
+	os.Exit(1)
 }

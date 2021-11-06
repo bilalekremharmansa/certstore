@@ -1,15 +1,18 @@
 package certstore
 
 import (
+	"errors"
+
 	"bilalekrem.com/certstore/internal/certificate/service"
 	"bilalekrem.com/certstore/internal/logging"
 )
 
 type certStoreImpl struct {
-	caCertService *service.CACertificateService
+	caCertService service.CertificateService
+	certService service.CertificateService
 }
 
-var DEFAULT_CLUSTER_CERT_EXPIRATION_DAYS = 720
+var DEFAULT_CLUSTER_CERT_EXPIRATION_DAYS = 2 * 365
 
 // -------
 
@@ -18,6 +21,20 @@ func New() (*certStoreImpl, error) {
 		caCertService: &service.CACertificateService{},
 	}, nil
 }
+
+func NewWithCA(caPrivateKeyPem []byte, caCertPem []byte) (*certStoreImpl, error) {
+	certService, err := service.New(caPrivateKeyPem, caCertPem)
+	if err != nil {
+		return nil, err
+	}
+
+	return &certStoreImpl{
+		caCertService: &service.CACertificateService{},
+		certService: certService,
+	}, nil
+}
+
+// ------
 
 func (c *certStoreImpl) CreateClusterCACertificate(clusterName string) (*service.NewCertificateResponse, error) {
 	request := &service.NewCertificateRequest{
@@ -29,5 +46,43 @@ func (c *certStoreImpl) CreateClusterCACertificate(clusterName string) (*service
 	if err != nil {
 		return nil, err
 	}
+	return response, nil
+}
+
+func (c *certStoreImpl) CreateServerCertificate(advertisedServerName string) (*service.NewCertificateResponse, error) {
+	if c.certService == nil {
+		return nil, errors.New("CA required to create and sign server ecertificates")
+	}
+
+	request := &service.NewCertificateRequest{
+		CommonName: advertisedServerName,
+		ExpirationDays: DEFAULT_CLUSTER_CERT_EXPIRATION_DAYS,
+	}
+
+	logging.GetLogger().Debugf("creating server certificate for %s\n", advertisedServerName)
+	response, err := c.certService.CreateCertificate(request)
+	if err != nil {
+		return nil, err
+	}
+
+	return response, nil
+}
+
+func (c *certStoreImpl) CreateWorkerCertificate(address string) (*service.NewCertificateResponse, error) {
+	if c.certService == nil {
+		return nil, errors.New("CA required to create and sign worker ecertificates")
+	}
+
+	request := &service.NewCertificateRequest{
+		CommonName: address,
+		ExpirationDays: DEFAULT_CLUSTER_CERT_EXPIRATION_DAYS,
+	}
+
+	logging.GetLogger().Debugf("creating worker certificate for %s\n", address)
+	response, err := c.certService.CreateCertificate(request)
+	if err != nil {
+		return nil, err
+	}
+
 	return response, nil
 }
