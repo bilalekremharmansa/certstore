@@ -1,6 +1,8 @@
 package cli
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"io/ioutil"
 
 	"bilalekrem.com/certstore/internal/certificate/service"
@@ -54,4 +56,49 @@ func saveCert(targetPath string, identifier string, certificate *service.NewCert
 	logging.GetLogger().Infof("Saving %s certificate and key", identifier)
 	ioutil.WriteFile(targetPath+"/"+identifier+".crt", certificate.Certificate, 0644)
 	ioutil.WriteFile(targetPath+"/"+identifier+".key", certificate.PrivateKey, 0600)
+}
+
+func createServerTLSConfig(caCertPath string, serverCertPath string, serverCertKeyPath string) *tls.Config {
+	caCertPem, err := ioutil.ReadFile(caCertPath)
+	if err != nil {
+		error("Error occurred while reading ca: [%v]\n", err)
+	}
+
+	caPool := x509.NewCertPool()
+	if !caPool.AppendCertsFromPEM(caCertPem) {
+		error("could not add ca cert to cert pool")
+	}
+
+	serverCertificate, err := tls.LoadX509KeyPair(serverCertPath, serverCertKeyPath)
+	if err != nil {
+		error("Loading server certification failed: %v", err)
+	}
+
+	return &tls.Config{
+		ClientAuth:   tls.RequireAndVerifyClientCert,
+		Certificates: []tls.Certificate{serverCertificate},
+		ClientCAs:    caPool,
+	}
+}
+
+func createWorkerTLSConfig(caCertPath string, workerCertPath string, workerCertKeyPath string) *tls.Config {
+	caCertPem, err := ioutil.ReadFile(caCertPath)
+	if err != nil {
+		error("Error occurred while reading ca: [%v]\n", err)
+	}
+
+	caPool := x509.NewCertPool()
+	if !caPool.AppendCertsFromPEM(caCertPem) {
+		error("could not add ca cert to cert pool")
+	}
+
+	workerCertificate, err := tls.LoadX509KeyPair(workerCertPath, workerCertKeyPath)
+	if err != nil {
+		error("Loading server certification failed: %v", err)
+	}
+
+	return &tls.Config{
+		Certificates: []tls.Certificate{workerCertificate},
+		RootCAs:      caPool,
+	}
 }

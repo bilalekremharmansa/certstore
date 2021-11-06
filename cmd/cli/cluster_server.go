@@ -43,8 +43,9 @@ var clusterServerStartCmd = &cobra.Command{
 	Short: "start server",
 	Run: func(cmd *cobra.Command, args []string) {
 		port, _ := cmd.Flags().GetInt("port")
-		certPath, _ := cmd.Flags().GetString("cert")
-		certKeyPath, _ := cmd.Flags().GetString("certkey")
+		caCertPath, _ := cmd.Flags().GetString("cacert")
+		serverCertPath, _ := cmd.Flags().GetString("cert")
+		serverCertKeyPath, _ := cmd.Flags().GetString("certkey")
 
 		// ----
 
@@ -52,13 +53,14 @@ var clusterServerStartCmd = &cobra.Command{
 		if err != nil {
 			error("error occurred while listening port, %v", err)
 		}
-		var opts []grpc.ServerOption
-		creds, err := credentials.NewServerTLSFromFile(certPath, certKeyPath)
-		if err != nil {
+
+		tlsConfig := createServerTLSConfig(caCertPath, serverCertPath, serverCertKeyPath)
+		creds := credentials.NewTLS(tlsConfig)
+		if creds == nil {
 			error("Failed to generate credentials %v", err)
 		}
 
-		opts = []grpc.ServerOption{grpc.Creds(creds)}
+		opts := []grpc.ServerOption{grpc.Creds(creds)}
 		grpcServer := grpc.NewServer(opts...)
 		pb.RegisterHelloServiceServer(grpcServer, server.NewHelloService())
 		reflection.Register(grpcServer)
@@ -77,8 +79,10 @@ func init() {
 	// ------
 
 	clusterServerStartCmd.Flags().Int("port", 10000, "listen port")
+	clusterServerStartCmd.Flags().String("cacert", "", "CA certificate file for verifying the server")
 	clusterServerStartCmd.Flags().String("cert", "", "x509 certificate file for mTLS")
 	clusterServerStartCmd.Flags().String("certkey", "", "x509 private key file for mTLS")
+	clusterServerStartCmd.MarkFlagRequired("cacert")
 	clusterServerStartCmd.MarkFlagRequired("cert")
 	clusterServerStartCmd.MarkFlagRequired("certkey")
 
