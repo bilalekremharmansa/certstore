@@ -1,8 +1,15 @@
 package cli
 
 import (
+	"fmt"
+	"net"
+
+	pb "bilalekrem.com/certstore/internal/grpc/proto"
+	"bilalekrem.com/certstore/internal/grpc/server"
 	"bilalekrem.com/certstore/internal/logging"
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 )
 
 var clusterServerCmd = &cobra.Command{
@@ -30,6 +37,26 @@ var clusterServerCreateCertCmd = &cobra.Command{
 	},
 }
 
+var clusterServerStartCmd = &cobra.Command{
+	Use:   "start",
+	Short: "start server",
+	Run: func(cmd *cobra.Command, args []string) {
+		port, _ := cmd.Flags().GetInt("port")
+
+		// ----
+
+		lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", port))
+		if err != nil {
+			error("error occurred while listening port, %v", err)
+		}
+		var opts []grpc.ServerOption
+		grpcServer := grpc.NewServer(opts...)
+		pb.RegisterHelloServiceServer(grpcServer, server.NewHelloService())
+		reflection.Register(grpcServer)
+		grpcServer.Serve(lis)
+	},
+}
+
 func init() {
 	clusterServerCreateCertCmd.Flags().String("advertised-name", "", "advertised address of server")
 	clusterServerCreateCertCmd.Flags().String("cacert", "", "certificate authority file path in PEM format")
@@ -38,6 +65,13 @@ func init() {
 	clusterServerCreateCertCmd.MarkFlagRequired("cacert")
 	clusterServerCreateCertCmd.MarkFlagRequired("cakey")
 
+	// ------
+
+	clusterServerStartCmd.Flags().Int("port", 10000, "listen port")
+
+	// ------
+
 	clusterCmd.AddCommand(clusterServerCmd)
 	clusterServerCmd.AddCommand(clusterServerCreateCertCmd)
+	clusterServerCmd.AddCommand(clusterServerStartCmd)
 }

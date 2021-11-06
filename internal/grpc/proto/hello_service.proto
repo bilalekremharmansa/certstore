@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+option go_package = "bilalekrem.com/certstore/internal/grpc/proto";
+
+package proto;
+
+import "internal/grpc/proto/hello.proto";
+
+service HelloService {
+	rpc SayHello(HelloRequest) returns (HelloResponse) {}
+}

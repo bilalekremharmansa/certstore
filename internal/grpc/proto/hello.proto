@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+option go_package = "bilalekrem.com/certstore/internal/grpc/proto";
+
+package proto;
+
+message HelloRequest {
+  string name = 1;
+}
+
+message HelloResponse {
+  string message = 1;
+}
