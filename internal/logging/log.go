@@ -18,6 +18,8 @@ func init() {
 		zapcore.Lock(os.Stdout),
 		atom,
 	)).Sugar()
+
+	atom.SetLevel(zap.DebugLevel)
 }
 
 func GetLogger() *zap.SugaredLogger {
