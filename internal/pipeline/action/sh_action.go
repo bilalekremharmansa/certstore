@@ -12,7 +12,7 @@ import (
 type ShellAction struct {
 }
 
-func (ShellAction) run(args map[string]string) error {
+func (ShellAction) Run(args map[string]string) error {
 	validate(args)
 
 	// ----
