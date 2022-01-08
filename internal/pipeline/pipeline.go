@@ -21,6 +21,24 @@ func New(name string) *pipelineImpl {
 	return &pipelineImpl{name: name}
 }
 
+func NewFromConfig(config *PipelineConfig, actionStore *action.ActionStore) (*pipelineImpl, error) {
+	pipeline := New(config.Name)
+
+	for _, configAction := range config.Actions {
+		_action, err := actionStore.Get(configAction.Name)
+
+		if err != nil {
+			return nil, err
+		}
+
+		args := configAction.Args
+		logging.GetLogger().Infof("[%s] args [%s]", configAction.Name, args)
+		pipeline.RegisterAction(*_action, args)
+	}
+
+	return pipeline, nil
+}
+
 func (p *pipelineImpl) RegisterAction(action action.Action, args map[string]string) {
 	logging.GetLogger().Infof("Adding a new action to pipeline [%s]", p.Name())
 	actionWithArgs := ActionWithArgs{action: action, args: args}
