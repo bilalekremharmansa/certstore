@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"bilalekrem.com/certstore/internal/pipeline/action"
+	"github.com/golang/mock/gomock"
 )
 
 func TestPipelineName(t *testing.T) {
@@ -15,16 +16,80 @@ func TestPipelineName(t *testing.T) {
 	}
 }
 
+func TestPipelineRunAction(t *testing.T) {
+	pipelineName := "test-pipeline"
+	pipeline := New(pipelineName)
+
+	// ----
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockAction := action.NewMockAction(ctrl)
+	mockAction.
+		EXPECT().
+		Run(gomock.Any()).
+		MinTimes(1)
+
+	pipeline.RegisterAction(mockAction, nil)
+
+	// ----
+
+	err := pipeline.Run(); if err != nil {
+		t.Fatalf("Error occurred while running pipeline, %v", err)
+	}
+
+}
+
+func TestPipelineRunActionWithConfig(t *testing.T) {
+	pipelineName := "test-pipeline"
+	pipeline := New(pipelineName)
+
+	// ----
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockAction := action.NewMockAction(ctrl)
+	args := map[string]string{}
+	args["my-arg"] = "my-value"
+
+	mockAction.
+		EXPECT().
+		Run(gomock.Eq(args)).
+		MinTimes(1)
+	pipeline.RegisterAction(mockAction, args)
+
+	// ----
+
+	err := pipeline.Run(); if err != nil {
+		t.Fatalf("Error occurred while running pipeline, %v", err)
+	}
+
+}
+
 func TestPipelineRunMultipleAction(t *testing.T) {
 	pipelineName := "test-pipeline"
 	pipeline := New(pipelineName)
 
 	// ----
 
-	mockAction := &action.MockAction{}
-	pipeline.RegisterAction(mockAction, nil)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
-	mockAction2 := &action.MockAction{}
+	mockAction := action.NewMockAction(ctrl)
+	mockAction.
+		EXPECT().
+		Run(gomock.Any()).
+		MinTimes(1)
+
+	mockAction2 := action.NewMockAction(ctrl)
+	mockAction2.
+		EXPECT().
+		Run(gomock.Any()).
+		MinTimes(1)
+
+	pipeline.RegisterAction(mockAction, nil)
 	pipeline.RegisterAction(mockAction2, nil)
 
 	// ----
@@ -33,12 +98,4 @@ func TestPipelineRunMultipleAction(t *testing.T) {
 		t.Fatalf("Error occurred while running pipeline, %v", err)
 	}
 
-	// ----
-
-	if !mockAction.Executed {
-		t.Fatalf("action should've been executed, but did not")
-	}
-	if !mockAction2.Executed {
-		t.Fatalf("action should've been executed, but did not")
-	}
 }
