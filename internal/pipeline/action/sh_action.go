@@ -7,12 +7,13 @@ import (
 	"strings"
 
 	"bilalekrem.com/certstore/internal/logging"
+	"bilalekrem.com/certstore/internal/pipeline/context"
 )
 
 type ShellAction struct {
 }
 
-func (ShellAction) Run(args map[string]string) error {
+func (ShellAction) Run(ctx *context.Context, args map[string]string) error {
 	validate(args)
 
 	// ----
@@ -34,7 +35,7 @@ func (ShellAction) Run(args map[string]string) error {
 	}
 
 	return errors.New(fmt.Sprintf("Error occurred while executing command [%s], exit code: %d",
-	 cmd, result.ProcessState.ExitCode()))
+		cmd, result.ProcessState.ExitCode()))
 }
 
 func validate(args map[string]string) error {

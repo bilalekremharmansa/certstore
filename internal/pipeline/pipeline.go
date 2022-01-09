@@ -3,6 +3,7 @@ package pipeline
 import (
 	"bilalekrem.com/certstore/internal/logging"
 	"bilalekrem.com/certstore/internal/pipeline/action"
+	"bilalekrem.com/certstore/internal/pipeline/context"
 )
 
 type Pipeline interface {
@@ -51,10 +52,12 @@ func (p *pipelineImpl) Name() string {
 
 func (p *pipelineImpl) Run() error {
 	logging.GetLogger().Infof("Starting to run pipeline [%s]", p.Name())
+
+	ctx := context.New()
 	for _, actionWithArgs := range p.actions {
 		action := actionWithArgs.action
 		args := actionWithArgs.args
-		err := action.Run(args)
+		err := action.Run(ctx, args)
 		if err != nil {
 			logging.GetLogger().Debugf("error occurred while running an action in pipeline %s, err: %v", p.Name(), err)
 			return err

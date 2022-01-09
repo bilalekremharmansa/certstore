@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"testing"
+
+	"bilalekrem.com/certstore/internal/pipeline/context"
 )
 
 func TestShellAction(t *testing.T) {
@@ -24,7 +26,7 @@ func TestShellAction(t *testing.T) {
 	args["command"] = fmt.Sprintf("/usr/bin/touch %s", testFile)
 
 	action := ShellAction{}
-	err = action.Run(args)
+	err = action.Run(context.New(), args)
 	if err != nil {
 		t.Fatalf("running shell action failed %v", err)
 	}
@@ -52,7 +54,7 @@ func TestShellActionWithError(t *testing.T) {
 	args["command"] = "/bin/mkdir /tmp"
 
 	action := ShellAction{}
-	err := action.Run(args)
+	err := action.Run(context.New(), args)
 	if err == nil {
 		t.Fatal("expected to have an error, but did not failed")
 	}

@@ -1,5 +1,7 @@
 package action
 
+import "bilalekrem.com/certstore/internal/pipeline/context"
+
 type Action interface {
-	Run(map[string]string) error
+	Run(*context.Context, map[string]string) error
 }

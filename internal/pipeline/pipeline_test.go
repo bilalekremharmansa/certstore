@@ -1,9 +1,11 @@
 package pipeline
 
 import (
+	"reflect"
 	"testing"
 
 	"bilalekrem.com/certstore/internal/pipeline/action"
+	"bilalekrem.com/certstore/internal/pipeline/context"
 	"github.com/golang/mock/gomock"
 )
 
@@ -28,7 +30,7 @@ func TestPipelineRunAction(t *testing.T) {
 	mockAction := action.NewMockAction(ctrl)
 	mockAction.
 		EXPECT().
-		Run(gomock.Any()).
+		Run(gomock.Any(), gomock.Any()).
 		MinTimes(1)
 
 	pipeline.RegisterAction(mockAction, nil)
@@ -57,7 +59,7 @@ func TestPipelineRunActionWithConfig(t *testing.T) {
 
 	mockAction.
 		EXPECT().
-		Run(gomock.Eq(args)).
+		Run(gomock.Any(), gomock.Eq(args)).
 		MinTimes(1)
 	pipeline.RegisterAction(mockAction, args)
 
@@ -82,13 +84,13 @@ func TestPipelineRunMultipleAction(t *testing.T) {
 	mockAction := action.NewMockAction(ctrl)
 	mockAction.
 		EXPECT().
-		Run(gomock.Any()).
+		Run(gomock.Any(), gomock.Any()).
 		MinTimes(1)
 
 	mockAction2 := action.NewMockAction(ctrl)
 	mockAction2.
 		EXPECT().
-		Run(gomock.Any()).
+		Run(gomock.Any(), gomock.Any()).
 		MinTimes(1)
 
 	pipeline.RegisterAction(mockAction, nil)
@@ -117,7 +119,7 @@ func TestNewPipelineFromConfig(t *testing.T) {
 	mockAction := action.NewMockAction(ctrl)
 	mockAction.
 		EXPECT().
-		Run(gomock.Any()).
+		Run(gomock.Any(), gomock.Any()).
 		MinTimes(1)
 
 	actionStore := action.NewActionStore()
@@ -176,14 +178,14 @@ actions:
 	shellCommandAction := action.NewMockAction(ctrl)
 	shellCommandAction.
 		EXPECT().
-		Run(gomock.Eq(shellArgs)).
+		Run(gomock.Any(), gomock.Eq(shellArgs)).
 		MinTimes(0)
 
 	var nilMap map[string]string
 	testAction := action.NewMockAction(ctrl)
 	testAction.
 		EXPECT().
-		Run(gomock.Eq(nilMap)).
+		Run(gomock.Any(), gomock.Eq(nilMap)).
 		MinTimes(0)
 
 	actionStore := action.NewActionStore()
@@ -203,5 +205,69 @@ actions:
 	if err != nil {
 		t.Fatalf("Error occurred while running pipeline, %v", err)
 	}
+}
 
+func TestPipelineContextStoreAndGetCustomValue(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	// ----
+
+	var FIRST_ACTION_STRING_KEY context.Key = "string key"
+	FIRST_ACTION_STRING_VALUE := "hello world"
+
+	var FIRST_ACTION_NUMBER_KEY context.Key = "number key"
+	FIRST_ACTION_NUMBER_VALUE := 100
+
+	first := action.NewMockAction(ctrl)
+	first.
+		EXPECT().
+		Run(gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx *context.Context, args map[string]string) error {
+			ctx.StoreValue(FIRST_ACTION_STRING_KEY, FIRST_ACTION_STRING_VALUE)
+			ctx.StoreValue(FIRST_ACTION_NUMBER_KEY, FIRST_ACTION_NUMBER_VALUE)
+
+			return nil
+		}).
+		AnyTimes()
+
+	second := action.NewMockAction(ctrl)
+	second.
+		EXPECT().
+		Run(gomock.Any(), gomock.Any()).
+		Do(func(ctx *context.Context, args map[string]string) error {
+			stringValue := ctx.GetValue(FIRST_ACTION_STRING_KEY)
+
+			if reflect.TypeOf(stringValue).Kind() != reflect.String {
+				t.Fatalf("Unexpected type, expected: string, found:%T", reflect.TypeOf(stringValue))
+			}
+
+			if stringValue != FIRST_ACTION_STRING_VALUE {
+				t.Fatalf("Unexpected value, expected: %s, found:%v", FIRST_ACTION_STRING_VALUE, stringValue)
+			}
+
+			// -----
+
+			numberValue := ctx.GetValue(FIRST_ACTION_NUMBER_KEY)
+
+			if reflect.TypeOf(numberValue).Kind() != reflect.Int {
+				t.Fatalf("Unexpected type, expected: int, found:%T", reflect.TypeOf(numberValue))
+			}
+
+			if numberValue != FIRST_ACTION_NUMBER_VALUE {
+				t.Fatalf("Unexpected value, expected: %d, found:%v", FIRST_ACTION_NUMBER_VALUE, numberValue)
+			}
+
+			return nil
+		}).
+		AnyTimes()
+
+	pipeline := New("test-pipeline")
+	pipeline.RegisterAction(first, nil)
+	pipeline.RegisterAction(second, nil)
+
+	err := pipeline.Run()
+	if err != nil {
+		t.Fatalf("Error occurred while running pipeline, %v", err)
+	}
 }
