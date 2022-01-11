@@ -23,7 +23,7 @@ func init() {
 // ----
 
 func getCertstore() certstore.CertStore {
-	certStore, err := certstore.New()
+	certStore, err := certstore.NewWithoutCA()
 	if err != nil {
 		error("Creation of certstore failed")
 	}
@@ -44,7 +44,7 @@ func getCertstoreWithCA(caKeyPath string, caCertPath string) certstore.CertStore
 
 	// ----
 
-	certStore, err := certstore.NewWithCA(caKeyPem, caCertPem)
+	certStore, err := certstore.New(caKeyPem, caCertPem)
 	if err != nil {
 		error("Creation of certstore with CA failed, [%v]\n", err)
 	}

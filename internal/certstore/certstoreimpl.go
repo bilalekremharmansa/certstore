@@ -8,41 +8,39 @@ import (
 )
 
 type certStoreImpl struct {
-	caCertService service.CertificateService
-	certService service.CertificateService
+	clusterService service.CertificateService
 }
 
 var DEFAULT_CLUSTER_CERT_EXPIRATION_DAYS = 2 * 365
 
 // -------
 
-func New() (*certStoreImpl, error) {
-	return &certStoreImpl{
-		caCertService: &service.CACertificateService{},
-	}, nil
-}
-
-func NewWithCA(caPrivateKeyPem []byte, caCertPem []byte) (*certStoreImpl, error) {
-	certService, err := service.New(caPrivateKeyPem, caCertPem)
+func New(caPrivateKeyPem []byte, caCertPem []byte) (*certStoreImpl, error) {
+	clusterService, err := service.New(caPrivateKeyPem, caCertPem)
 	if err != nil {
 		return nil, err
 	}
 
 	return &certStoreImpl{
-		caCertService: &service.CACertificateService{},
-		certService: certService,
+		clusterService: clusterService,
 	}, nil
+}
+
+func NewWithoutCA() (*certStoreImpl, error) {
+	return &certStoreImpl{}, nil
 }
 
 // ------
 
-func (c *certStoreImpl) CreateClusterCACertificate(clusterName string) (*service.NewCertificateResponse, error) {
+func (*certStoreImpl) CreateClusterCACertificate(clusterName string) (*service.NewCertificateResponse, error) {
 	request := &service.NewCertificateRequest{
 		CommonName: clusterName,
 		ExpirationDays: DEFAULT_CLUSTER_CERT_EXPIRATION_DAYS,
 	}
 	logging.GetLogger().Debug("creating cluster ca certificate")
-	response, err := c.caCertService.CreateCertificate(request)
+
+	caCertificateService := &service.CACertificateService{}
+	response, err := caCertificateService.CreateCertificate(request)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +48,7 @@ func (c *certStoreImpl) CreateClusterCACertificate(clusterName string) (*service
 }
 
 func (c *certStoreImpl) CreateServerCertificate(advertisedServerName string) (*service.NewCertificateResponse, error) {
-	if c.certService == nil {
+	if c.clusterService == nil {
 		return nil, errors.New("CA required to create and sign server ecertificates")
 	}
 
@@ -61,7 +59,7 @@ func (c *certStoreImpl) CreateServerCertificate(advertisedServerName string) (*s
 	}
 
 	logging.GetLogger().Debugf("creating server certificate for %s\n", advertisedServerName)
-	response, err := c.certService.CreateCertificate(request)
+	response, err := c.clusterService.CreateCertificate(request)
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +68,7 @@ func (c *certStoreImpl) CreateServerCertificate(advertisedServerName string) (*s
 }
 
 func (c *certStoreImpl) CreateWorkerCertificate(address string) (*service.NewCertificateResponse, error) {
-	if c.certService == nil {
+	if c.clusterService == nil {
 		return nil, errors.New("CA required to create and sign worker ecertificates")
 	}
 
@@ -81,7 +79,7 @@ func (c *certStoreImpl) CreateWorkerCertificate(address string) (*service.NewCer
 	}
 
 	logging.GetLogger().Debugf("creating worker certificate for %s\n", address)
-	response, err := c.certService.CreateCertificate(request)
+	response, err := c.clusterService.CreateCertificate(request)
 	if err != nil {
 		return nil, err
 	}

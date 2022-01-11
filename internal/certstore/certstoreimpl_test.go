@@ -8,13 +8,13 @@ import (
 )
 
 func TestCreateCertStore(t *testing.T) {
-	store, err := New()
+	store, err := NewWithoutCA()
 	if err != nil {
 		t.Fatalf("creating cert store failed, %v", err)
 	}
 
-	if store.caCertService == nil {
-		t.Fatalf("ca cert service is nil, should've been created\n")
+	if store == nil {
+		t.Fatalf("certstore is nil, should've been created\n")
 	}
 }
 
@@ -22,19 +22,19 @@ func TestCreateCertStoreWithCA(t *testing.T) {
 	pemCert := testutils.GetCAPem()
 	pemPrivateKey := testutils.GetCAPrivateKey()
 
-	store, err := NewWithCA([]byte(pemPrivateKey), []byte(pemCert))
+	store, err := New([]byte(pemPrivateKey), []byte(pemCert))
 	if err != nil {
 		t.Fatalf("creating cert store failed, %v", err)
 	}
 
 	// --
 
-	if store.caCertService == nil {
-		t.Fatalf("ca cert service is nil, should've been created\n")
+	if store == nil {
+		t.Fatalf("cerstore is nil, should've been created\n")
 	}
 
-	if store.certService == nil {
-		t.Fatalf("ca key and cert is provided, store.certService should not be nil")
+	if store.clusterService == nil {
+		t.Fatalf("ca key and cert is provided, store.clusterService should not be nil")
 	}
 }
 
@@ -42,7 +42,7 @@ func TestCreateCertStoreWithUnvalidCA(t *testing.T) {
 	pemCert := "invalid cert"
 	pemPrivateKey := testutils.GetCAPrivateKey()
 
-	_, err := NewWithCA([]byte(pemPrivateKey), []byte(pemCert))
+	_, err := New([]byte(pemPrivateKey), []byte(pemCert))
 	if err == nil {
 		t.Fatal("provided cert is invalid, error expected but did not returned")
 	}
@@ -52,14 +52,14 @@ func TestCreateCertStoreWithUnvalidCAKey(t *testing.T) {
 	pemCert := testutils.GetCAPem()
 	pemPrivateKey := "invalid key"
 
-	_, err := NewWithCA([]byte(pemPrivateKey), []byte(pemCert))
+	_, err := New([]byte(pemPrivateKey), []byte(pemCert))
 	if err == nil {
 		t.Fatal("provided cert key is invalid, error expected but did not returned")
 	}
 }
 
 func TestCreateCA(t *testing.T) {
-	store, _ := New()
+	store, _ := NewWithoutCA()
 	clusterName := "my-cluster"
 	certificate, err := store.CreateClusterCACertificate(clusterName)
 	if err != nil {
@@ -88,7 +88,7 @@ func TestCreateCA(t *testing.T) {
 }
 
 func TestCreateServerCert(t *testing.T) {
-	storeWithoutCA, _ := New()
+	storeWithoutCA, _ := NewWithoutCA()
 	clusterName := "my-cluster"
 	caCert, err := storeWithoutCA.CreateClusterCACertificate(clusterName)
 	if err != nil {
@@ -97,7 +97,7 @@ func TestCreateServerCert(t *testing.T) {
 
 	// -----
 
-	store, _ := NewWithCA(caCert.PrivateKey, caCert.Certificate)
+	store, _ := New(caCert.PrivateKey, caCert.Certificate)
 	serverName := "my-server"
 	serverCertResponse, err := store.CreateServerCertificate(serverName)
 	if err != nil {
@@ -116,7 +116,7 @@ func TestCreateServerCert(t *testing.T) {
 }
 
 func TestCreateWorkerCert(t *testing.T) {
-	storeWithoutCA, _ := New()
+	storeWithoutCA, _ := NewWithoutCA()
 	clusterName := "my-cluster"
 	caCert, err := storeWithoutCA.CreateClusterCACertificate(clusterName)
 	if err != nil {
@@ -125,7 +125,7 @@ func TestCreateWorkerCert(t *testing.T) {
 
 	// -----
 
-	store, _ := NewWithCA(caCert.PrivateKey, caCert.Certificate)
+	store, _ := New(caCert.PrivateKey, caCert.Certificate)
 	workerName := "my-worker"
 	workerCertResponse, err := store.CreateWorkerCertificate(workerName)
 	if err != nil {
