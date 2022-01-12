@@ -7,4 +7,6 @@ type CertStore interface {
 
 	CreateServerCertificate(advertisedServerName string) (*service.NewCertificateResponse, error)
 	CreateWorkerCertificate(address string) (*service.NewCertificateResponse, error)
+
+	IssueCertificate(string, *service.NewCertificateRequest) (*service.NewCertificateResponse, error)
 }

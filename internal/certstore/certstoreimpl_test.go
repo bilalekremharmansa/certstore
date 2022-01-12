@@ -3,8 +3,10 @@ package certstore
 import (
 	"testing"
 
+	certificate_service "bilalekrem.com/certstore/internal/certificate/service"
 	"bilalekrem.com/certstore/internal/certificate/x509utils"
 	"bilalekrem.com/certstore/internal/testutils"
+	"github.com/golang/mock/gomock"
 )
 
 func TestCreateCertStore(t *testing.T) {
@@ -88,16 +90,7 @@ func TestCreateCA(t *testing.T) {
 }
 
 func TestCreateServerCert(t *testing.T) {
-	storeWithoutCA, _ := NewWithoutCA()
-	clusterName := "my-cluster"
-	caCert, err := storeWithoutCA.CreateClusterCACertificate(clusterName)
-	if err != nil {
-		t.Fatalf("cluster ca certificate could not be created, %v", err)
-	}
-
-	// -----
-
-	store, _ := New(caCert.PrivateKey, caCert.Certificate)
+	store := createCertStore(t)
 	serverName := "my-server"
 	serverCertResponse, err := store.CreateServerCertificate(serverName)
 	if err != nil {
@@ -116,16 +109,7 @@ func TestCreateServerCert(t *testing.T) {
 }
 
 func TestCreateWorkerCert(t *testing.T) {
-	storeWithoutCA, _ := NewWithoutCA()
-	clusterName := "my-cluster"
-	caCert, err := storeWithoutCA.CreateClusterCACertificate(clusterName)
-	if err != nil {
-		t.Fatalf("cluster ca certificate could not be created, %v", err)
-	}
-
-	// -----
-
-	store, _ := New(caCert.PrivateKey, caCert.Certificate)
+	store := createCertStore(t)
 	workerName := "my-worker"
 	workerCertResponse, err := store.CreateWorkerCertificate(workerName)
 	if err != nil {
@@ -141,4 +125,54 @@ func TestCreateWorkerCert(t *testing.T) {
 	if workerCert.IsCA {
 		t.Fatal("generated worker certificate is CA, should've been server")
 	}
+}
+
+func TestIssueCertificate(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	firstRequest := &certificate_service.NewCertificateRequest{CommonName: "first cert"}
+	firstService := certificate_service.NewMockCertificateService(ctrl)
+	firstService.
+		EXPECT().
+		CreateCertificate(gomock.Eq(firstRequest)).
+		MinTimes(1)
+
+	secondRequest := &certificate_service.NewCertificateRequest{CommonName: "second cert"}
+	secondService := certificate_service.NewMockCertificateService(ctrl)
+	secondService.
+		EXPECT().
+		CreateCertificate(gomock.Eq(secondRequest)).
+		MinTimes(1)
+
+	// ----
+
+	store, _ := NewWithoutCA()
+	store.RegisterIssuer("first issuer", firstService)
+	store.RegisterIssuer("second issuer", secondService)
+
+	// ----
+
+	store.IssueCertificate("first issuer", firstRequest)
+	store.IssueCertificate("second issuer", secondRequest)
+}
+
+// -----
+
+func createCertStore(t *testing.T) *certStoreImpl {
+	storeWithoutCA, _ := NewWithoutCA()
+	clusterName := "my-cluster"
+	caCert, err := storeWithoutCA.CreateClusterCACertificate(clusterName)
+	if err != nil {
+		t.Fatalf("cluster ca certificate could not be created, %v", err)
+	}
+
+	// -----
+
+	store, err := New(caCert.PrivateKey, caCert.Certificate)
+	if err != nil {
+		t.Fatalf("cluster ca certificate could not be created, %v", err)
+	}
+
+	return store
 }

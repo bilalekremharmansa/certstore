@@ -2,6 +2,7 @@ package certstore
 
 import (
 	"errors"
+	"fmt"
 
 	"bilalekrem.com/certstore/internal/certificate/service"
 	"bilalekrem.com/certstore/internal/logging"
@@ -9,6 +10,7 @@ import (
 
 type certStoreImpl struct {
 	clusterService service.CertificateService
+	certIssuers map[string]service.CertificateService
 }
 
 var DEFAULT_CLUSTER_CERT_EXPIRATION_DAYS = 2 * 365
@@ -23,11 +25,14 @@ func New(caPrivateKeyPem []byte, caCertPem []byte) (*certStoreImpl, error) {
 
 	return &certStoreImpl{
 		clusterService: clusterService,
+		certIssuers: make(map[string]service.CertificateService),
 	}, nil
 }
 
 func NewWithoutCA() (*certStoreImpl, error) {
-	return &certStoreImpl{}, nil
+	return &certStoreImpl{
+		certIssuers: make(map[string]service.CertificateService),
+	}, nil
 }
 
 // ------
@@ -85,4 +90,29 @@ func (c *certStoreImpl) CreateWorkerCertificate(address string) (*service.NewCer
 	}
 
 	return response, nil
+}
+
+func (c *certStoreImpl) IssueCertificate(issuer string, request *service.NewCertificateRequest) (*service.NewCertificateResponse, error) {
+	certService, exist := c.certIssuers[issuer]
+	if !exist {
+		logging.GetLogger().Debug("Issuer not found: [%s]", issuer)
+		return nil, errors.New(fmt.Sprintf("Issuer not found: [%s]", issuer))
+	}
+
+	// ----
+
+	logging.GetLogger().Debug("Issuer found, creating a new certificate %s", request)
+	response, err := certService.CreateCertificate(request)
+	if err != nil {
+		return nil, err
+	}
+
+	return response, nil
+}
+
+// ------
+
+func (c *certStoreImpl) RegisterIssuer(issuer string, certService service.CertificateService) {
+	logging.GetLogger().Debug("Registering a new certificate service: [%s]", issuer)
+	c.certIssuers[issuer] = certService
 }

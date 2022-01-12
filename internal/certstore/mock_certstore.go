@@ -78,3 +78,18 @@ func (mr *MockCertStoreMockRecorder) CreateWorkerCertificate(address interface{}
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateWorkerCertificate", reflect.TypeOf((*MockCertStore)(nil).CreateWorkerCertificate), address)
 }
+
+// IssueCertificate mocks base method.
+func (m *MockCertStore) IssueCertificate(arg0 string, arg1 *service.NewCertificateRequest) (*service.NewCertificateResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IssueCertificate", arg0, arg1)
+	ret0, _ := ret[0].(*service.NewCertificateResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// IssueCertificate indicates an expected call of IssueCertificate.
+func (mr *MockCertStoreMockRecorder) IssueCertificate(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IssueCertificate", reflect.TypeOf((*MockCertStore)(nil).IssueCertificate), arg0, arg1)
+}
