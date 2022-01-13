@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"net"
 
-	pb "bilalekrem.com/certstore/internal/grpc/proto"
-	"bilalekrem.com/certstore/internal/grpc/server"
+	grpc_gen "bilalekrem.com/certstore/internal/certstore/grpc/gen"
+	grpc_service "bilalekrem.com/certstore/internal/certstore/grpc/service"
 	"bilalekrem.com/certstore/internal/logging"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
+
+	// "google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/reflection"
 )
 
@@ -43,26 +44,31 @@ var clusterServerStartCmd = &cobra.Command{
 	Short: "start server",
 	Run: func(cmd *cobra.Command, args []string) {
 		port, _ := cmd.Flags().GetInt("port")
-		caCertPath, _ := cmd.Flags().GetString("cacert")
-		serverCertPath, _ := cmd.Flags().GetString("cert")
-		serverCertKeyPath, _ := cmd.Flags().GetString("certkey")
+		// caCertPath, _ := cmd.Flags().GetString("cacert")
+		// serverCertPath, _ := cmd.Flags().GetString("cert")
+		// serverCertKeyPath, _ := cmd.Flags().GetString("certkey")
+
+		certstore := getCertstore()
 
 		// ----
 
+		logging.GetLogger().Debugf("Starting to listening on localhost:%d", port)
 		lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", port))
 		if err != nil {
 			error("error occurred while listening port, %v", err)
 		}
 
-		tlsConfig := createServerTLSConfig(caCertPath, serverCertPath, serverCertKeyPath)
-		creds := credentials.NewTLS(tlsConfig)
-		if creds == nil {
-			error("Failed to generate credentials %v", err)
-		}
+		// todo tls will be enabled later
+		// tlsConfig := createServerTLSConfig(caCertPath, serverCertPath, serverCertKeyPath)
+		// creds := credentials.NewTLS(tlsConfig)
+		// if creds == nil {
+		// 	error("Failed to generate credentials %v", err)
+		// }
 
-		opts := []grpc.ServerOption{grpc.Creds(creds)}
+		// opts := []grpc.ServerOption{grpc.Creds(creds)}
+		opts := []grpc.ServerOption{}
 		grpcServer := grpc.NewServer(opts...)
-		pb.RegisterHelloServiceServer(grpcServer, server.NewHelloService())
+		grpc_gen.RegisterCertificateServiceServer(grpcServer, grpc_service.NewCertificateService(certstore))
 		reflection.Register(grpcServer)
 		grpcServer.Serve(lis)
 	},

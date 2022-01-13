@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+option go_package = "bilalekrem.com/certstore/internal/certstore/grpc/gen";
+
+package proto;
+
+message CertificateRequest {
+  string issuer = 1;
+
+  string commonName = 2;
+  string email = 3;
+  string organization = 4;
+  int32 expirationDays = 5;
+
+  repeated string SANs = 6;
+}
+
+message CertificateResponse {
+  string certificate = 1;
+  string privateKey = 2;
+}

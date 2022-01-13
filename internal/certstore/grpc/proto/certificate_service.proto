@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+option go_package = "bilalekrem.com/certstore/internal/certstore/grpc/gen";
+
+package proto;
+
+import "certificate_request_response.proto";
+
+service CertificateService {
+	rpc IssueCertificate(CertificateRequest) returns (CertificateResponse) {}
+}
