@@ -5,12 +5,14 @@ import (
 	"fmt"
 
 	"bilalekrem.com/certstore/internal/certificate/service"
+	"bilalekrem.com/certstore/internal/certificate/service/factory"
+	"bilalekrem.com/certstore/internal/certstore/config"
 	"bilalekrem.com/certstore/internal/logging"
 )
 
 type certStoreImpl struct {
 	clusterService service.CertificateService
-	certIssuers map[string]service.CertificateService
+	certIssuers    map[string]service.CertificateService
 }
 
 var DEFAULT_CLUSTER_CERT_EXPIRATION_DAYS = 2 * 365
@@ -25,7 +27,7 @@ func New(caPrivateKeyPem []byte, caCertPem []byte) (*certStoreImpl, error) {
 
 	return &certStoreImpl{
 		clusterService: clusterService,
-		certIssuers: make(map[string]service.CertificateService),
+		certIssuers:    make(map[string]service.CertificateService),
 	}, nil
 }
 
@@ -35,11 +37,38 @@ func NewWithoutCA() (*certStoreImpl, error) {
 	}, nil
 }
 
+func NewFromConfig(conf *config.Config) (*certStoreImpl, error) {
+	var clusterService service.CertificateService
+
+	clusterConfig := conf.ClusterConfig
+	if clusterConfig.CertificatePath != "" {
+		args := make(map[string]string)
+		args["private-key"] = clusterConfig.PrivateKeyPath
+		args["certificate"] = clusterConfig.CertificatePath
+		clusterService = factory.NewService(factory.Simple, args)
+	}
+
+	store := &certStoreImpl{
+		clusterService: clusterService,
+		certIssuers:    make(map[string]service.CertificateService),
+	}
+
+	// ------
+
+	for _, issuerConfig := range conf.IssuerConfigs {
+		issuer := factory.NewService(issuerConfig.Type, issuerConfig.Args)
+
+		store.RegisterIssuer(issuerConfig.Name, issuer)
+	}
+
+	return store, nil
+}
+
 // ------
 
 func (*certStoreImpl) CreateClusterCACertificate(clusterName string) (*service.NewCertificateResponse, error) {
 	request := &service.NewCertificateRequest{
-		CommonName: clusterName,
+		CommonName:     clusterName,
 		ExpirationDays: DEFAULT_CLUSTER_CERT_EXPIRATION_DAYS,
 	}
 	logging.GetLogger().Debug("creating cluster ca certificate")
@@ -58,8 +87,8 @@ func (c *certStoreImpl) CreateServerCertificate(advertisedServerName string) (*s
 	}
 
 	request := &service.NewCertificateRequest{
-		CommonName: advertisedServerName,
-		ExpirationDays: DEFAULT_CLUSTER_CERT_EXPIRATION_DAYS,
+		CommonName:              advertisedServerName,
+		ExpirationDays:          DEFAULT_CLUSTER_CERT_EXPIRATION_DAYS,
 		SubjectAlternativeNames: []string{advertisedServerName},
 	}
 
@@ -78,8 +107,8 @@ func (c *certStoreImpl) CreateWorkerCertificate(address string) (*service.NewCer
 	}
 
 	request := &service.NewCertificateRequest{
-		CommonName: address,
-		ExpirationDays: DEFAULT_CLUSTER_CERT_EXPIRATION_DAYS,
+		CommonName:              address,
+		ExpirationDays:          DEFAULT_CLUSTER_CERT_EXPIRATION_DAYS,
 		SubjectAlternativeNames: []string{address},
 	}
 
@@ -113,6 +142,6 @@ func (c *certStoreImpl) IssueCertificate(issuer string, request *service.NewCert
 // ------
 
 func (c *certStoreImpl) RegisterIssuer(issuer string, certService service.CertificateService) {
-	logging.GetLogger().Debug("Registering a new certificate service: [%s]", issuer)
+	logging.GetLogger().Debugf("Registering a new certificate service: [%s]", issuer)
 	c.certIssuers[issuer] = certService
 }

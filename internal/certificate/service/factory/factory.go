@@ -7,18 +7,21 @@ import (
 	"bilalekrem.com/certstore/internal/logging"
 )
 
-type ServiceType int
+type ServiceType string
 
 const (
-	Simple ServiceType = 1 << iota
-	CertificateAuthority
+	Simple               ServiceType = "Simple"
+	CertificateAuthority             = "CertificateAuthority"
+	Unknown                          = "Unknown"
 )
 
-func NewService(t ServiceType, args map[string]interface{}) service.CertificateService {
+func NewService(t ServiceType, args map[string]string) service.CertificateService {
+	logging.GetLogger().Debugf("Creating new service with type %s\n", t)
+
 	switch t {
 	case Simple:
-		caPrivateKeyPath := args["private-key"].(string)
-		caCertificatePath := args["certificate"].(string)
+		caPrivateKeyPath := args["private-key"]
+		caCertificatePath := args["certificate"]
 
 		caPrivateKey, err := ioutil.ReadFile(caPrivateKeyPath)
 		if err != nil {
@@ -38,7 +41,9 @@ func NewService(t ServiceType, args map[string]interface{}) service.CertificateS
 	case CertificateAuthority:
 		svc := &service.CACertificateService{}
 		return svc
+	case Unknown:
 	default:
 		return nil
 	}
+	return nil
 }

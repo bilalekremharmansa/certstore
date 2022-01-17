@@ -28,7 +28,7 @@ func TestNewSimpleCertificateService(t *testing.T) {
 
 	// -----
 
-	args := make(map[string]interface{})
+	args := make(map[string]string)
 	args["private-key"] = privateKeyPath
 	args["certificate"] = certPath
 
@@ -42,5 +42,19 @@ func TestCACertificateService(t *testing.T) {
 	service := NewService(CertificateAuthority, nil)
 	if service == nil {
 		t.Fatal("error occurred while creating new ca certificate service")
+	}
+}
+
+func TestUnknownServiceShouldBeNil(t *testing.T) {
+	service := NewService(Unknown, nil)
+	if service != nil {
+		t.Fatal("service must be null, because service type is unknown.")
+	}
+}
+
+func TestUnrelatedServiceShouldBeNil(t *testing.T) {
+	service := NewService("test", nil)
+	if service != nil {
+		t.Fatal("service must be null, because service type is unrelated.")
 	}
 }
