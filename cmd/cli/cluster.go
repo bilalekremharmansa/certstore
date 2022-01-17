@@ -7,6 +7,7 @@ import (
 
 	"bilalekrem.com/certstore/internal/certificate/service"
 	"bilalekrem.com/certstore/internal/certstore"
+	"bilalekrem.com/certstore/internal/certstore/config"
 	"bilalekrem.com/certstore/internal/logging"
 	"github.com/spf13/cobra"
 )
@@ -50,6 +51,20 @@ func getCertstoreWithCA(caKeyPath string, caCertPath string) certstore.CertStore
 	}
 
 	return certStore
+}
+
+func getCertstoreWithConfig(configPath string) certstore.CertStore {
+	config, err := config.ParseFile(configPath)
+	if err != nil {
+		error("Error occurred while reading server config: [%v]\n", err)
+	}
+
+	store, err := certstore.NewFromConfig(config)
+	if err != nil {
+		error("creating certstore with config failed: [%v]\n", err)
+	}
+
+	return store
 }
 
 func saveCert(targetPath string, identifier string, certificate *service.NewCertificateResponse) {

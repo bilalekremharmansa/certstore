@@ -47,8 +47,9 @@ var clusterServerStartCmd = &cobra.Command{
 		// caCertPath, _ := cmd.Flags().GetString("cacert")
 		// serverCertPath, _ := cmd.Flags().GetString("cert")
 		// serverCertKeyPath, _ := cmd.Flags().GetString("certkey")
+		certStoreConfigPath, _ := cmd.Flags().GetString("config")
 
-		certstore := getCertstore()
+		certstore := getCertstoreWithConfig(certStoreConfigPath)
 
 		// ----
 
@@ -85,12 +86,14 @@ func init() {
 	// ------
 
 	clusterServerStartCmd.Flags().Int("port", 10000, "listen port")
-	clusterServerStartCmd.Flags().String("cacert", "", "CA certificate file for verifying the server")
-	clusterServerStartCmd.Flags().String("cert", "", "x509 certificate file for mTLS")
-	clusterServerStartCmd.Flags().String("certkey", "", "x509 private key file for mTLS")
-	clusterServerStartCmd.MarkFlagRequired("cacert")
-	clusterServerStartCmd.MarkFlagRequired("cert")
-	clusterServerStartCmd.MarkFlagRequired("certkey")
+	// clusterServerStartCmd.Flags().String("cacert", "", "CA certificate file for verifying the server")
+	// clusterServerStartCmd.Flags().String("cert", "", "x509 certificate file for mTLS")
+	// clusterServerStartCmd.Flags().String("certkey", "", "x509 private key file for mTLS")
+	clusterServerStartCmd.Flags().String("config", "", "server config file path")
+	// clusterServerStartCmd.MarkFlagRequired("cacert")
+	// clusterServerStartCmd.MarkFlagRequired("cert")
+	// clusterServerStartCmd.MarkFlagRequired("certkey")
+	clusterServerStartCmd.MarkFlagRequired("config")
 
 	// ------
 
