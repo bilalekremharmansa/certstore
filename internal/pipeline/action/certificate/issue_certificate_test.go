@@ -2,6 +2,7 @@ package certificate
 
 import (
 	go_ctx "context"
+	b64 "encoding/base64"
 	"reflect"
 	"strings"
 	"testing"
@@ -24,9 +25,11 @@ func TestRun(t *testing.T) {
 		EXPECT().
 		IssueCertificate(gomock.Any(), gomock.Any()).
 		DoAndReturn(func(_ go_ctx.Context, _ interface{}, opts ...interface{}) (*grpc.CertificateResponse, error) {
+			b64EncodedCertificate := b64.StdEncoding.EncodeToString([]byte(expectedCertificate))
+			b64EncodedPrivateKey := b64.StdEncoding.EncodeToString([]byte(expectedPrivateKey))
 			return &grpc.CertificateResponse{
-				Certificate: expectedCertificate,
-				PrivateKey:  expectedPrivateKey,
+				Certificate: b64EncodedCertificate,
+				PrivateKey:  b64EncodedPrivateKey,
 			}, nil
 		})
 
@@ -42,13 +45,13 @@ func TestRun(t *testing.T) {
 
 	// -----
 
-	certificate := ctx.GetValue(ISSUED_CERTIFICATE_CTX_KEY)
-	if certificate != expectedCertificate {
+	certificate := ctx.GetValue(ISSUED_CERTIFICATE_CTX_KEY).([]byte)
+	if string(certificate) != expectedCertificate {
 		t.Fatalf("certificate is not put into context succesfully, found: %v", certificate)
 	}
 
-	privateKey := ctx.GetValue(ISSUED_PRIVATE_KEY_CTX_KEY)
-	if expectedPrivateKey != expectedPrivateKey {
+	privateKey := ctx.GetValue(ISSUED_PRIVATE_KEY_CTX_KEY).([]byte)
+	if string(privateKey) != expectedPrivateKey {
 		t.Fatalf("private key is not put into context succesfully, found: %v", privateKey)
 	}
 

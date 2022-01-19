@@ -2,6 +2,7 @@ package certificate
 
 import (
 	go_ctx "context"
+	b64 "encoding/base64"
 	"errors"
 	"fmt"
 	"strconv"
@@ -54,6 +55,8 @@ func (a IssueCertificateAction) Run(ctx *context.Context, args map[string]string
 		sans = strings.Split(args[ARGS_SANS], ";")
 	}
 
+	// ----
+
 	request := &gen.CertificateRequest{
 		Issuer:         issuer,
 		CommonName:     args[ARGS_COMMON_NAME],
@@ -70,9 +73,24 @@ func (a IssueCertificateAction) Run(ctx *context.Context, args map[string]string
 		return err
 	}
 
+	// ----
+
+	certificate, err := b64.StdEncoding.DecodeString(response.Certificate)
+	if err != nil {
+		logging.GetLogger().Errorf("decoding issued certificate, failed, %v", err)
+		return err
+	}
+	privateKey, err := b64.StdEncoding.DecodeString(response.PrivateKey)
+	if err != nil {
+		logging.GetLogger().Errorf("decoding issued certificate private key, failed, %v", err)
+		return err
+	}
+
+	// ----
+
 	logging.GetLogger().Debugf("Storing issued certificate into context - [%s]", issuer)
-	ctx.StoreValue(ISSUED_CERTIFICATE_CTX_KEY, response.Certificate)
-	ctx.StoreValue(ISSUED_PRIVATE_KEY_CTX_KEY, response.PrivateKey)
+	ctx.StoreValue(ISSUED_CERTIFICATE_CTX_KEY, certificate)
+	ctx.StoreValue(ISSUED_PRIVATE_KEY_CTX_KEY, privateKey)
 
 	return nil
 }
