@@ -9,6 +9,7 @@ generate-mock:
 	mockgen -source=internal/pipeline/action/action.go -destination internal/pipeline/action/mock_action.go -package=action
 	mockgen -source=internal/certificate/service/service.go -destination internal/certificate/service/mock_service.go -package=service
 	mockgen -source=internal/certstore/certstore.go -destination internal/certstore/mock_certstore.go -package=certstore
+	mockgen -source=internal/certstore/grpc/gen/certificate_service_grpc.pb.go -destination internal/certstore/grpc/gen/mock_certificate_service.pb.go -package=gen
 
 test:
 	go test ./...
