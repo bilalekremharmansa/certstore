@@ -1,14 +1,9 @@
 package cli
 
 import (
-	"context"
-	"fmt"
-
-	pb "bilalekrem.com/certstore/internal/grpc/proto"
+	wrk "bilalekrem.com/certstore/internal/cluster/worker"
 	"bilalekrem.com/certstore/internal/logging"
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 )
 
 var clusterWorkerCmd = &cobra.Command{
@@ -37,37 +32,29 @@ var clusterWorkerCreateCertCmd = &cobra.Command{
 }
 
 var clusterWorkerStartCmd = &cobra.Command{
-	Use:   "communicateServer",
-	Short: "communicat with server",
+	Use:   "start",
+	Short: "start worker",
 	Run: func(cmd *cobra.Command, args []string) {
-		serverAddress, _ := cmd.Flags().GetString("server-address")
-		caCertPath, _ := cmd.Flags().GetString("cacert")
-		workerCertPath, _ := cmd.Flags().GetString("cert")
-		workerCertKeyPath, _ := cmd.Flags().GetString("certkey")
+		configPath, _ := cmd.Flags().GetString("config")
+		pipelineToRun, _ := cmd.Flags().GetString("pipeline")
+
+		// caCertPath, _ := cmd.Flags().GetString("cacert")
+		// workerCertPath, _ := cmd.Flags().GetString("cert")
+		// workerCertKeyPath, _ := cmd.Flags().GetString("certkey")
 
 		// -----
-		tlsConfig := createWorkerTLSConfig(caCertPath, workerCertPath, workerCertKeyPath)
-		creds := credentials.NewTLS(tlsConfig)
-		if creds == nil {
-			error("Failed to generate credentials")
+
+		worker, err := wrk.NewFromFile(configPath)
+		if err != nil {
+			error("error occurred: [%v]\n", err)
 		}
 
-		opts := []grpc.DialOption{grpc.WithTransportCredentials(creds)}
-		conn, err := grpc.Dial(serverAddress, opts...)
-		if err != nil {
-			error("fail to dial gRPC server: %v", err)
-		}
-		defer conn.Close()
+		// ---
 
-		client := pb.NewHelloServiceClient(conn)
-		request := &pb.HelloRequest{
-			Name: "certstore!",
-		}
-		response, err := client.SayHello(context.Background(), request)
+		err = worker.RunPipeline(pipelineToRun)
 		if err != nil {
-			error("error occurred communicating server: %v", err)
+			error("error occurred: [%v]\n", err)
 		}
-		fmt.Println(response.Message)
 	},
 }
 
@@ -80,14 +67,17 @@ func init() {
 	clusterWorkerCreateCertCmd.MarkFlagRequired("cakey")
 
 	// ------
-	clusterWorkerStartCmd.Flags().String("server-address", "", "server address to communicate")
-	clusterWorkerStartCmd.Flags().String("cacert", "", "CA certificate file for verifying the server")
-	clusterWorkerStartCmd.Flags().String("cert", "", "x509 certificate file for mTLS")
-	clusterWorkerStartCmd.Flags().String("certkey", "", "x509 private key file for mTLS")
-	clusterWorkerStartCmd.MarkFlagRequired("server-address")
-	clusterWorkerStartCmd.MarkFlagRequired("cacert")
-	clusterWorkerStartCmd.MarkFlagRequired("cert")
-	clusterWorkerStartCmd.MarkFlagRequired("certkey")
+	clusterWorkerStartCmd.Flags().String("config", "", "worker config file path")
+	clusterWorkerStartCmd.MarkFlagRequired("config")
+	clusterWorkerStartCmd.Flags().String("pipeline", "", "pipeline name to run")
+	clusterWorkerStartCmd.MarkFlagRequired("pipeline")
+
+	// clusterWorkerStartCmd.Flags().String("cacert", "", "CA certificate file for verifying the server")
+	// clusterWorkerStartCmd.Flags().String("cert", "", "x509 certificate file for mTLS")
+	// clusterWorkerStartCmd.Flags().String("certkey", "", "x509 private key file for mTLS")
+	// clusterWorkerStartCmd.MarkFlagRequired("cacert")
+	// clusterWorkerStartCmd.MarkFlagRequired("cert")
+	// clusterWorkerStartCmd.MarkFlagRequired("certkey")
 
 	clusterCmd.AddCommand(clusterWorkerCmd)
 	clusterWorkerCmd.AddCommand(clusterWorkerCreateCertCmd)

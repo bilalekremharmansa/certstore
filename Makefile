@@ -1,3 +1,6 @@
+include .env
+export
+
 .PHONY: generate-proto
 
 generate-proto:
@@ -14,3 +17,10 @@ generate-mock:
 test:
 	go test ./...
 
+
+
+run-server:
+	go run cmd/main.go cluster server start --config $(SERVER_CONFIG_PATH)
+
+run-worker:
+	go run cmd/main.go cluster worker start --config $(WORKER_CONFIG_PATH) --pipeline $(WORKER_PIPELINE_TO_RUN)
