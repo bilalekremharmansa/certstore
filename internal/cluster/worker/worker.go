@@ -11,6 +11,7 @@ import (
 	"bilalekrem.com/certstore/internal/pipeline"
 	"bilalekrem.com/certstore/internal/pipeline/action"
 	"bilalekrem.com/certstore/internal/pipeline/action/issuecertificate"
+	"bilalekrem.com/certstore/internal/pipeline/action/savecertificate"
 	"google.golang.org/grpc"
 )
 
@@ -103,6 +104,7 @@ func getActionStore(client *certificate_service.CertificateServiceClient) *actio
 	store := action.NewActionStore()
 
 	store.Put("issue-certificate", issuecertificate.NewIssueCertificateAction(*client))
+	store.Put("save-certificate", savecertificate.NewSaveCertificateAction())
 
 	return store
 }

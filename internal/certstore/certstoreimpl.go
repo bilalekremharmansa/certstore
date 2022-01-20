@@ -130,7 +130,7 @@ func (c *certStoreImpl) IssueCertificate(issuer string, request *service.NewCert
 
 	// ----
 
-	logging.GetLogger().Debug("Issuer found, creating a new certificate %s", request)
+	logging.GetLogger().Debugf("Issuer found, creating a new certificate %s", request)
 	response, err := certService.CreateCertificate(request)
 	if err != nil {
 		return nil, err
