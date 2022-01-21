@@ -5,11 +5,12 @@ import (
 
 	"bilalekrem.com/certstore/internal/pipeline"
 	"bilalekrem.com/certstore/internal/pipeline/action"
+	"bilalekrem.com/certstore/internal/pipeline/store"
 )
 
 func TestInitSuccess(t *testing.T) {
 	worker := &Worker{
-		pipelines: make(map[string]pipeline.Pipeline),
+		pipelineStore: store.New(),
 	}
 
 	actionStore := action.NewActionStore()
@@ -31,7 +32,7 @@ func TestInitSuccess(t *testing.T) {
 
 func TestInitFail(t *testing.T) {
 	worker := &Worker{
-		pipelines: make(map[string]pipeline.Pipeline),
+		pipelineStore: store.New(),
 	}
 
 	actionStore := action.NewActionStore()

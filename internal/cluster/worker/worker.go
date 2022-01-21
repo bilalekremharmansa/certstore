@@ -12,11 +12,12 @@ import (
 	"bilalekrem.com/certstore/internal/pipeline/action"
 	"bilalekrem.com/certstore/internal/pipeline/action/issuecertificate"
 	"bilalekrem.com/certstore/internal/pipeline/action/savecertificate"
+	"bilalekrem.com/certstore/internal/pipeline/store"
 	"google.golang.org/grpc"
 )
 
 type Worker struct {
-	pipelines map[string]pipeline.Pipeline
+	pipelineStore *store.PipelineStore
 }
 
 func NewFromFile(path string) (*Worker, error) {
@@ -35,7 +36,7 @@ func NewFromFile(path string) (*Worker, error) {
 
 func NewFromConfig(conf *config.Config) (*Worker, error) {
 	worker := &Worker{
-		pipelines: make(map[string]pipeline.Pipeline),
+		pipelineStore: store.New(),
 	}
 
 	// ----
@@ -57,8 +58,8 @@ func NewFromConfig(conf *config.Config) (*Worker, error) {
 
 func (w *Worker) RunPipeline(pipelineName string) error {
 	logging.GetLogger().Errorf("Running pipeline, %s", pipelineName)
-	pip, exists := w.pipelines[pipelineName]
-	if !exists {
+	pip := w.pipelineStore.GetPipeline(pipelineName)
+	if pip == nil {
 		logging.GetLogger().Errorf("pipeline not found, %s", pipelineName)
 		return errors.New(fmt.Sprintf("pipeline not found, %s", pipelineName))
 	}
@@ -94,7 +95,7 @@ func (w *Worker) init(pipelineConfigs []pipeline.PipelineConfig, actionStore *ac
 		}
 
 		logging.GetLogger().Info("pipeline is created: [%s]", pip.Name())
-		w.pipelines[pip.Name()] = pip
+		w.pipelineStore.StorePipeline(pip)
 	}
 
 	return nil
