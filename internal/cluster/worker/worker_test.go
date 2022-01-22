@@ -3,6 +3,7 @@ package worker
 import (
 	"testing"
 
+	"bilalekrem.com/certstore/internal/assert"
 	"bilalekrem.com/certstore/internal/pipeline"
 	"bilalekrem.com/certstore/internal/pipeline/action"
 	"bilalekrem.com/certstore/internal/pipeline/store"
@@ -25,9 +26,7 @@ func TestInitSuccess(t *testing.T) {
 			}},
 	}
 	err := worker.init(pipelineConfigs, actionStore)
-	if err != nil {
-		t.Fatalf("initialization failed, %v", err)
-	}
+	assert.NotError(t, err, "initialization failed")
 }
 
 func TestInitFail(t *testing.T) {
@@ -46,7 +45,5 @@ func TestInitFail(t *testing.T) {
 			}},
 	}
 	err := worker.init(pipelineConfigs, actionStore)
-	if err == nil {
-		t.Fatalf("initialization should've been failed -- action-two is missing in store, %v", err)
-	}
+	assert.Error(t, err, "should've been failed, action-two is missing in store")
 }

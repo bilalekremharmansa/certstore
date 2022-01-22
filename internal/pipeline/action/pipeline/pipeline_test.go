@@ -1,9 +1,9 @@
 package pipeline
 
 import (
-	"strings"
 	"testing"
 
+	"bilalekrem.com/certstore/internal/assert"
 	"bilalekrem.com/certstore/internal/pipeline"
 	"bilalekrem.com/certstore/internal/pipeline/action"
 	"bilalekrem.com/certstore/internal/pipeline/context"
@@ -36,19 +36,14 @@ func TestRun(t *testing.T) {
 	args[ARGS_PIPELINE_NAME] = "my-pipeline"
 
 	err := action.Run(context.New(), args)
-	if err != nil {
-		t.Fatalf("running action failed, %v", err)
-	}
-
+	assert.NotError(t, err, "running action")
 }
 
 func TestRequiredPipelineName(t *testing.T) {
 	args := make(map[string]string)
 
 	err := NewPipelineAction(nil).Run(nil, args)
-	if err == nil || !strings.Contains(err.Error(), "required argument") {
-		t.Fatalf("required arg error is expected but not found")
-	}
+	assert.ErrorContains(t, err, "required argument")
 }
 
 func TestMissingPipeline(t *testing.T) {
@@ -58,7 +53,5 @@ func TestMissingPipeline(t *testing.T) {
 	args[ARGS_PIPELINE_NAME] = "my-pipeline"
 
 	err := NewPipelineAction(pipelineStore).Run(nil, args)
-	if err == nil || !strings.Contains(err.Error(), "pipeline not found") {
-		t.Fatalf("pipeline not found error is expected but not found")
-	}
+	assert.ErrorContains(t, err, "pipeline not found")
 }

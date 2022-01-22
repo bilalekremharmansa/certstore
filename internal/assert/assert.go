@@ -93,13 +93,40 @@ func ErrorContains(t *testing.T, err error, msg string) {
 }
 
 func Nil(t *testing.T, i interface{}) {
-	if i != nil {
+	if !isNil(i) {
 		t.Fatal("[ERROR] assertion failed - object is not nil")
 	}
 }
 
 func NotNil(t *testing.T, i interface{}) {
-	if i == nil {
+	if isNil(i) {
 		t.Fatal("[ERROR] assertion failed - object is nil")
 	}
+}
+
+// copied from: https://github.com/stretchr/testify/blob/master/assert/assertions.go
+func isNil(i interface{}) bool {
+	if i == nil {
+		return true
+	}
+
+	value := reflect.ValueOf(i)
+	kind := value.Kind()
+	isNilableKind := false
+	nilableKinds := []reflect.Kind{
+		reflect.Chan, reflect.Func,
+		reflect.Interface, reflect.Map,
+		reflect.Ptr, reflect.Slice}
+
+	for i := 0; i < len(nilableKinds); i++ {
+		if kind == nilableKinds[i] {
+			isNilableKind = true
+		}
+	}
+
+	if isNilableKind && value.IsNil() {
+		return true
+	}
+
+	return false
 }

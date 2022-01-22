@@ -1,10 +1,11 @@
 package service
 
 import (
-	"reflect"
 	"testing"
 
 	"crypto/x509"
+
+	"bilalekrem.com/certstore/internal/assert"
 )
 
 func TestDefault_NotISCA(t *testing.T) {
@@ -15,9 +16,7 @@ func TestDefault_NotISCA(t *testing.T) {
 	}
 	response := createCert(t, &service, request)
 	cert := parsePEMToX509Certificate(t, response.Certificate)
-	if cert.IsCA {
-		t.Fatal("Certificate is CA")
-	}
+	assert.False(t, cert.IsCA)
 }
 
 func TestDefault_KeyUsage(t *testing.T) {
@@ -29,9 +28,8 @@ func TestDefault_KeyUsage(t *testing.T) {
 	response := createCert(t, &service, request)
 	cert := parsePEMToX509Certificate(t, response.Certificate)
 
-	if (cert.KeyUsage & x509.KeyUsageDigitalSignature) != x509.KeyUsageDigitalSignature {
-		t.Fatalf("CA certificate does not have digital signature key usage, should've been")
-	}
+	assert.EqualM(t, (cert.KeyUsage & x509.KeyUsageDigitalSignature), x509.KeyUsageDigitalSignature,
+		"CA certificate does not have digital signature key usage")
 }
 
 func TestDefault_SubjectAlternativeDNSNames(t *testing.T) {
@@ -45,9 +43,8 @@ func TestDefault_SubjectAlternativeDNSNames(t *testing.T) {
 	response := createCert(t, &service, request)
 	cert := parsePEMToX509Certificate(t, response.Certificate)
 
-	if len(cert.DNSNames) == 0 || !reflect.DeepEqual(cert.DNSNames, dnsNames) {
-		t.Fatalf("cert SANs are not equal to expected: [%s], actual:[%s]\n", dnsNames, cert.DNSNames)
-	}
+	assert.NotEqual(t, 0, len(cert.DNSNames))
+	assert.DeepEqualM(t, dnsNames, dnsNames, "sans are not equal")
 }
 
 func TestDefault_VerifySignedWithCA(t *testing.T) {
@@ -73,9 +70,8 @@ func TestDefault_VerifySignedWithCA(t *testing.T) {
 		Roots: roots,
 	}
 
-	if _, err := cert.Verify(opts); err != nil {
-		t.Fatalf("verification of CA is failed\n")
-	}
+	_, err := cert.Verify(opts)
+	assert.NotError(t, err, "verification of CA is failed\n")
 }
 
 // ----- common certificate service tests
@@ -146,8 +142,6 @@ func createCertificateServiceImpl(t *testing.T) *certificateServiceImpl {
 	caResponse, _ := caCertService.CreateCertificate(caRequest)
 
 	service, err := New(caResponse.PrivateKey, caResponse.Certificate)
-	if err != nil {
-		t.Fatalf("creating certificate service failed: [%v]", err)
-	}
+	assert.NotError(t, err, "creating certificate service failed")
 	return service
 }

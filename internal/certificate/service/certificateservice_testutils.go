@@ -1,14 +1,13 @@
 package service
 
 import (
-	"reflect"
 	"regexp"
-	"strings"
 	"testing"
 	"time"
 
 	"crypto/x509"
 
+	"bilalekrem.com/certstore/internal/assert"
 	"bilalekrem.com/certstore/internal/certificate/x509utils"
 )
 
@@ -23,9 +22,8 @@ func testEmail(t *testing.T, service *CertificateService) {
 	response := createCert(t, service, request)
 	cert := parsePEMToX509Certificate(t, response.Certificate)
 
-	if len(cert.EmailAddresses) == 0 || !reflect.DeepEqual(cert.EmailAddresses, email) {
-		t.Fatalf("Email address is not correct, expected: [%s] found: [%s] \n", email, cert.EmailAddresses)
-	}
+	assert.NotEqualM(t, 0, cert.EmailAddresses, "email should've been found")
+	assert.DeepEqual(t, email, cert.EmailAddresses)
 }
 
 func testNotValidEmail(t *testing.T, service *CertificateService) {
@@ -37,9 +35,8 @@ func testNotValidEmail(t *testing.T, service *CertificateService) {
 		ExpirationDays: 365,
 	}
 	_, err := (*service).CreateCertificate(request)
-	if !(err != nil && strings.Contains(err.Error(), "Validation error: email")) {
-		t.Fatalf("provided not valid email, but expected error not raised error: [%v]", err)
-	}
+
+	assert.ErrorContains(t, err, "Validation error: email")
 }
 
 func testSubject(t *testing.T, service *CertificateService) {
@@ -57,13 +54,10 @@ func testSubject(t *testing.T, service *CertificateService) {
 	cert := parsePEMToX509Certificate(t, response.Certificate)
 
 	subject := cert.Subject
-	if subject.CommonName != commonName {
-		t.Fatalf("Common name is not correct, expected: [%s] found: [%s] \n", commonName, subject.CommonName)
-	}
+	assert.Equal(t, commonName, subject.CommonName)
 
-	if len(subject.Organization) == 0 || !reflect.DeepEqual(subject.Organization, organization) {
-		t.Fatalf("Organization name is not correct, expected: [%s] found: [%s] \n", organization, subject.Organization)
-	}
+	assert.NotEqual(t, 0, subject.Organization)
+	assert.DeepEqual(t, organization, subject.Organization)
 }
 
 func testNotProvidedCommonName(t *testing.T, service *CertificateService) {
@@ -71,9 +65,8 @@ func testNotProvidedCommonName(t *testing.T, service *CertificateService) {
 		ExpirationDays: 365,
 	}
 	_, err := (*service).CreateCertificate(request)
-	if !(err != nil && strings.Contains(err.Error(), "Validation error: common name")) {
-		t.Fatalf("provided not valid email, but error proper error not raised error: [%v]", err)
-	}
+
+	assert.ErrorContains(t, err, "Validation error: common name")
 }
 
 func testUniqueSerialNumber(t *testing.T, service *CertificateService) {
@@ -87,15 +80,13 @@ func testUniqueSerialNumber(t *testing.T, service *CertificateService) {
 	firstCert := parsePEMToX509Certificate(t, firstResponse.Certificate)
 	secondCert := parsePEMToX509Certificate(t, secondResponse.Certificate)
 
-	if firstCert.SerialNumber == secondCert.SerialNumber {
-		t.Fatalf("Sequentially created two certs' serial numbers are same, should've been different. first: [%s], second: [%s]",
-			firstCert.SerialNumber.String(), secondCert.SerialNumber.String())
-	}
+	assert.NotEqualM(t, firstCert.SerialNumber, secondCert.SerialNumber,
+		"Sequentially created two certs' serial numbers must be different")
 }
 
 func testExpirationDate(t *testing.T, service *CertificateService) {
 	expirationDays := 742
-	beforeExpirationDate := time.Now().AddDate(0, 0, expirationDays)
+	beforeExpirationDate := time.Now().AddDate(0, 0, expirationDays - 5)
 
 	// ----
 
@@ -108,12 +99,10 @@ func testExpirationDate(t *testing.T, service *CertificateService) {
 
 	// ---
 
-	certExpireDate := cert.NotAfter
-	afterExpirationDate := time.Now().AddDate(0, 0, expirationDays)
+	afterExpirationDate := time.Now().AddDate(0, 0, expirationDays + 5)
 
-	if certExpireDate.After(beforeExpirationDate) && certExpireDate.Before(afterExpirationDate) {
-		t.Fatalf("Expiration date is not correct, expected [%d] days later, found: [%s] \n", expirationDays, certExpireDate)
-	}
+	assert.True(t, cert.NotAfter.Before(afterExpirationDate))
+	assert.True(t, beforeExpirationDate.Before(cert.NotAfter))
 }
 
 func testNotValidExpirationDate(t *testing.T, service *CertificateService) {
@@ -122,9 +111,8 @@ func testNotValidExpirationDate(t *testing.T, service *CertificateService) {
 		ExpirationDays: 0,
 	}
 	_, err := (*service).CreateCertificate(request)
-	if !(err != nil && strings.Contains(err.Error(), "Validation error: expiration days")) {
-		t.Fatalf("provided not valid expiration date, must be bigger than 1: [%v]", err)
-	}
+
+	assert.ErrorContains(t, err, "Validation error: expiration days")
 }
 
 func testNotProvidedExpirationDate(t *testing.T, service *CertificateService) {
@@ -133,13 +121,11 @@ func testNotProvidedExpirationDate(t *testing.T, service *CertificateService) {
 	}
 
 	_, err := (*service).CreateCertificate(request)
-	if !(err != nil && strings.Contains(err.Error(), "Validation error: expiration days")) {
-		t.Fatalf("provided not valid expiration date, must be bigger than 1: [%v]", err)
-	}
+	assert.ErrorContains(t, err, "Validation error: expiration days")
 }
 
 func testStartDate(t *testing.T, service *CertificateService) {
-	beforeCreateCert := time.Now()
+	beforeCreateCert := time.Now().AddDate(0, 0, -1)
 
 	// ----
 
@@ -152,12 +138,11 @@ func testStartDate(t *testing.T, service *CertificateService) {
 
 	// ---
 
-	certExpireDate := cert.NotBefore
 	afterCreateCert := time.Now()
 
-	if certExpireDate.After(beforeCreateCert) && cert.NotAfter.Before(afterCreateCert) {
-		t.Fatalf("Start date is not correct, should've been now but: [%s] \n", certExpireDate)
-	}
+	assert.True(t, beforeCreateCert.Before(cert.NotBefore))
+	assert.True(t, afterCreateCert.After(cert.NotBefore))
+	assert.True(t, afterCreateCert.Before(cert.NotAfter))
 }
 
 func testCertificate(t *testing.T, service *CertificateService) {
@@ -171,9 +156,7 @@ func testCertificate(t *testing.T, service *CertificateService) {
 	pattern := "-----BEGIN CERTIFICATE-----(\n.*)*----END CERTIFICATE-----\n"
 	re := regexp.MustCompile(pattern)
 	matched := re.MatchString(certificateStr)
-	if !matched {
-		t.Fatalf("expected [%s] but found [%s]", pattern, certificateStr)
-	}
+	assert.True(t, matched)
 }
 
 func testRSAPrivateKey(t *testing.T, service *CertificateService) {
@@ -187,19 +170,14 @@ func testRSAPrivateKey(t *testing.T, service *CertificateService) {
 	pattern := "-----BEGIN RSA PRIVATE KEY-----(\n.*)*----END RSA PRIVATE KEY-----\n"
 	re := regexp.MustCompile(pattern)
 	matched := re.MatchString(privateKeyStr)
-	if !matched {
-		t.Fatalf("expected [%s] but found [%s]", pattern, privateKeyStr)
-	}
+	assert.True(t, matched)
 }
 
 // ---
 
 func parsePEMToX509Certificate(t *testing.T, certPem []byte) *x509.Certificate {
 	cert, err := x509utils.ParsePemCertificate(certPem)
-	if err != nil {
-		t.Fatalf("parsing certificate failed")
-	}
-
+	assert.NotError(t, err, "parsing certificate failed")
 	return cert
 }
 
@@ -207,8 +185,6 @@ func parsePEMToX509Certificate(t *testing.T, certPem []byte) *x509.Certificate {
 
 func createCert(t *testing.T, service *CertificateService, request *NewCertificateRequest) *NewCertificateResponse {
 	response, err := (*service).CreateCertificate(request)
-	if err != nil {
-		t.Fatalf("cert creation failed %v", err)
-	}
+	assert.NotError(t, err, "cert creation failed")
 	return response
 }

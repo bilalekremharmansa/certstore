@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"crypto/x509"
+
+	"bilalekrem.com/certstore/internal/assert"
 )
 
 func TestCA_ISCA(t *testing.T) {
@@ -14,9 +16,8 @@ func TestCA_ISCA(t *testing.T) {
 	}
 	response := createCert(t, &service, request)
 	cert := parsePEMToX509Certificate(t, response.Certificate)
-	if !cert.IsCA {
-		t.Fatal("Certificate is not CA")
-	}
+
+	assert.True(t, cert.IsCA)
 }
 
 func TestCA_KeyUsageCertSign(t *testing.T) {
@@ -28,13 +29,11 @@ func TestCA_KeyUsageCertSign(t *testing.T) {
 	response := createCert(t, &service, request)
 	cert := parsePEMToX509Certificate(t, response.Certificate)
 
-	if (cert.KeyUsage & x509.KeyUsageDigitalSignature) != x509.KeyUsageDigitalSignature {
-		t.Fatalf("CA certificate does not have digital signature key usage, should've been")
-	}
+	assert.EqualM(t, (cert.KeyUsage & x509.KeyUsageDigitalSignature), x509.KeyUsageDigitalSignature,
+		"CA certificate does not have digital signature key usage")
 
-	if (cert.KeyUsage & x509.KeyUsageCertSign) != x509.KeyUsageCertSign {
-		t.Fatalf("CA certificate does not have certificate sign key usage, should've been")
-	}
+	assert.EqualM(t, (cert.KeyUsage & x509.KeyUsageCertSign), x509.KeyUsageCertSign,
+		"CA certificate does not have certificate sign key usage")
 }
 
 // ----- common certificate service tests

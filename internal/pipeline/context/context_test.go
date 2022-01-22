@@ -2,19 +2,16 @@ package context
 
 import (
 	"testing"
+
+	"bilalekrem.com/certstore/internal/assert"
 )
 
 const TEST_KEY Key = "test-key"
 
 func TestNew(t *testing.T) {
 	ctx := New()
-	if ctx == nil {
-		t.Fatalf("New context creation failed")
-	}
-
-	if ctx.values == nil {
-		t.Fatalf("values map is nil, should've been initialized")
-	}
+	assert.NotNil(t, ctx)
+	assert.NotNil(t, ctx.values)
 }
 
 func TestStoreAndGetValue(t *testing.T) {
@@ -24,7 +21,5 @@ func TestStoreAndGetValue(t *testing.T) {
 	ctx.StoreValue(TEST_KEY, value)
 
 	retrievedValue := ctx.GetValue(TEST_KEY)
-	if retrievedValue != value {
-		t.Fatalf("Stored value is not correct, expected: %s, found: %s", value, retrievedValue)
-	}
+	assert.Equal(t, value, retrievedValue)
 }

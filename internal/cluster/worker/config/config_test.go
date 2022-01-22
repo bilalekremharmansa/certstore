@@ -2,6 +2,8 @@ package config
 
 import (
 	"testing"
+
+	"bilalekrem.com/certstore/internal/assert"
 )
 
 func TestParse(t *testing.T) {
@@ -24,41 +26,20 @@ pipelines:
       - name: second-action`
 
 	config, err := Parse(configYaml)
-	if err != nil {
-		t.Fatalf("parsing failed: %v\n", err)
-	}
+	assert.NotError(t, err, "parsing failed")
 
 	// ----
 
 	clusterConfig := config.Cluster
-	if clusterConfig.ServerAddr != "addr:port" {
-		t.Fatalf("server address is not correct, found: %s", clusterConfig.ServerAddr)
-	}
-
-	if clusterConfig.TlsCACert != "ca-cert-path" {
-		t.Fatalf("ca cert is not correct, found: %s", clusterConfig.TlsCACert)
-	}
-
-	if clusterConfig.TlsWorkerCert != "worker-cert-path" {
-		t.Fatalf("worker cert is not correct, found: %s", clusterConfig.TlsWorkerCert)
-	}
-	if clusterConfig.TlsWorkerCertKey != "worker-cert-key-path" {
-		t.Fatalf("worker cert key is not correct, found: %s", clusterConfig.TlsWorkerCertKey)
-	}
+	assert.Equal(t, "addr:port", clusterConfig.ServerAddr)
+	assert.Equal(t, "ca-cert-path", clusterConfig.TlsCACert)
+	assert.Equal(t, "worker-cert-path", clusterConfig.TlsWorkerCert)
+	assert.Equal(t, "worker-cert-key-path", clusterConfig.TlsWorkerCertKey)
 
 	// -----
 
 	pipelines := config.Pipelines
-	if len(pipelines) != 2 {
-		t.Fatalf("size of pipeline is not correct, found: %d", len(pipelines))
-	}
-
-	if pipelines[0].Name != "first-pipeline" {
-		t.Fatalf("Pipeline name is not correct, found: %s", pipelines[0].Name)
-	}
-
-	if len(pipelines[0].Actions) != 2 {
-		t.Fatalf("size of first pipeline action is not correct, found: %d", len(pipelines[0].Actions))
-	}
-
+	assert.Equal(t, 2, len(pipelines))
+	assert.Equal(t, "first-pipeline", pipelines[0].Name)
+	assert.Equal(t, 2, len(pipelines[0].Actions))
 }

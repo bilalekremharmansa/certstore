@@ -2,6 +2,8 @@ package pipeline
 
 import (
 	"testing"
+
+	"bilalekrem.com/certstore/internal/assert"
 )
 
 func TestParseFromByte(t *testing.T) {
@@ -13,44 +15,25 @@ actions:
   - name: mock-action`
 
 	config, err := ParsePipelineConfig(pipelineYaml)
-	if err != nil {
-		t.Fatalf("Error occurred while parsing pipeline config, %v\n", err)
-	}
+	assert.NotError(t, err, "parsing pipeline config")
 
-	if config.Name != "my-pipeline" {
-		t.Fatalf("Pipeline name is not correct, expected: my-pipeline found: %s\n", config.Name)
-	}
+	assert.Equal(t, "my-pipeline", config.Name)
 
 	actions := config.Actions
-	if len(actions) != 2 {
-		t.Fatalf("pipeline action length is not correct, expected: 2, found: %d\n", len(actions))
-	}
+	assert.Equal(t, 2, len(actions))
 
 	// ----
 
 	firstAction := actions[0]
-	if firstAction.Name != "shell-cmd" {
-		t.Fatalf("first action name is not correct, expected: shell-cmd, found: %s\n", firstAction.Name)
-	}
-
-	if len(firstAction.Args) != 1 {
-		t.Fatalf("first action arg length is not correct, expected: 1, found: %d\n", len(firstAction.Args))
-	}
-
-	if firstAction.Args["command"] != "echo hello" {
-		t.Fatalf("first action argument is not correct, expected: 'command=echo hello', found: %s\n", firstAction.Args)
-	}
+	assert.Equal(t, "shell-cmd", firstAction.Name)
+	assert.Equal(t, 1, len(firstAction.Args))
+	assert.Equal(t, "echo hello", firstAction.Args["command"])
 
 	// ----
 
 	secondAction := actions[1]
-	if secondAction.Name != "mock-action" {
-		t.Fatalf("second action name is not correct, expected: mock-action, found: %ss\n", secondAction.Name)
-	}
+	assert.Equal(t, "mock-action", secondAction.Name)
 
 	// should be a nil map
-	if secondAction.Args != nil {
-		t.Fatalf("second action argument is not correct, expected: nil, found: %s\n", secondAction.Args)
-	}
-
+	assert.Nil(t, secondAction.Args)
 }

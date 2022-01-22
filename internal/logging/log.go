@@ -19,7 +19,7 @@ func init() {
 		atom,
 	)).Sugar()
 
-	atom.SetLevel(zap.DebugLevel)
+	atom.SetLevel(zap.ErrorLevel)
 }
 
 func GetLogger() *zap.SugaredLogger {

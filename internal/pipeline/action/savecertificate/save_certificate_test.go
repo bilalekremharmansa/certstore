@@ -4,19 +4,18 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
-	"strings"
+	"os"
 	"testing"
 
+	"bilalekrem.com/certstore/internal/assert"
 	"bilalekrem.com/certstore/internal/pipeline/action/issuecertificate"
 	"bilalekrem.com/certstore/internal/pipeline/context"
 )
 
 func TestRun(t *testing.T) {
 	dir, err := ioutil.TempDir("/tmp", "test_save_certificate_action")
-	if err != nil {
-		t.Fatalf("error occurred while creating temp dir, %v", err)
-	}
-	// defer os.RemoveAll(dir)
+	assert.NotError(t, err, "creating temp dir")
+	defer os.RemoveAll(dir)
 
 	// ----
 
@@ -40,31 +39,21 @@ func TestRun(t *testing.T) {
 
 	action := NewSaveCertificateAction()
 	err = action.Run(ctx, args)
-	if err != nil {
-		t.Fatalf("error occurred while running action, %v", err)
-	}
+	assert.NotError(t, err, "running action")
 
 	// ----
 
 	actualCertificateContent, err := ioutil.ReadFile(certificateTargetPath)
-	if err != nil {
-		t.Fatalf("error occurred while reading file, %v", err)
-	}
+	assert.NotError(t, err, "reading file")
 
-	if bytes.Compare(certificateContent, actualCertificateContent) != 0 {
-		t.Fatalf("certificate content is not correct, expected: %s, found: %s", certificateContent, actualCertificateContent)
-	}
+	assert.TrueM(t, bytes.Compare(certificateContent, actualCertificateContent) == 0, "certificate content is not correct")
 
 	// ----
 
 	actualCertificateKeyContent, err := ioutil.ReadFile(certificateKeyTargetPath)
-	if err != nil {
-		t.Fatalf("error occurred while reading file, %v", err)
-	}
+	assert.NotError(t, err, "reading file")
 
-	if bytes.Compare(certificateKeyContent, actualCertificateKeyContent) != 0 {
-		t.Fatalf("certificate key content is not correct, expected: %s, found: %s", certificateContent, actualCertificateKeyContent)
-	}
+	assert.TrueM(t, bytes.Compare(certificateKeyContent, actualCertificateKeyContent) == 0, "certificate key content is not correct")
 
 }
 
@@ -73,9 +62,7 @@ func TestRequiredArgumentCertificate(t *testing.T) {
 	args[ARGS_CERTIFICATE_KEY_TARGET_PATH] = "test"
 
 	err := NewSaveCertificateAction().Run(nil, args)
-	if err == nil || !strings.Contains(err.Error(), "required argument") {
-		t.Fatalf("required arg error is expected but not found")
-	}
+	assert.ErrorContains(t, err, "required argument")
 }
 
 func TestRequiredArgumentPrivateKey(t *testing.T) {
@@ -83,9 +70,7 @@ func TestRequiredArgumentPrivateKey(t *testing.T) {
 	args[ARGS_CERTIFICATE_TARGET_PATH] = "test"
 
 	err := NewSaveCertificateAction().Run(nil, args)
-	if err == nil || !strings.Contains(err.Error(), "required argument") {
-		t.Fatalf("required arg error is expected but not found")
-	}
+	assert.ErrorContains(t, err, "required argument")
 }
 
 func TestIssuedCertificateIsNotInContext(t *testing.T) {
@@ -97,9 +82,7 @@ func TestIssuedCertificateIsNotInContext(t *testing.T) {
 	ctx.StoreValue(issuecertificate.ISSUED_PRIVATE_KEY_CTX_KEY, []byte("test"))
 
 	err := NewSaveCertificateAction().Run(ctx, args)
-	if err == nil || !strings.Contains(err.Error(), "not found in context") {
-		t.Fatalf("not found in context error is expected but not found")
-	}
+	assert.ErrorContains(t, err, "not found in context")
 }
 
 func TestIssuedCertificateKeyIsNotInContext(t *testing.T) {
@@ -111,7 +94,5 @@ func TestIssuedCertificateKeyIsNotInContext(t *testing.T) {
 	ctx.StoreValue(issuecertificate.ISSUED_CERTIFICATE_CTX_KEY, []byte("test"))
 
 	err := NewSaveCertificateAction().Run(ctx, args)
-	if err == nil || !strings.Contains(err.Error(), "not found in context") {
-		t.Fatalf("not found in context error is expected but not found")
-	}
+	assert.ErrorContains(t, err, "not found in context")
 }

@@ -5,14 +5,13 @@ import (
 	"os"
 	"testing"
 
+	"bilalekrem.com/certstore/internal/assert"
 	"bilalekrem.com/certstore/internal/pipeline/context"
 )
 
 func TestShellAction(t *testing.T) {
 	tempDir, err := os.MkdirTemp("/tmp/", "*_test")
-	if err != nil {
-		t.Fatalf("creating temp dir failed %v", err)
-	}
+	assert.NotError(t, err, "creating temp dir")
 	defer os.Remove(tempDir)
 
 	// ------
@@ -27,25 +26,17 @@ func TestShellAction(t *testing.T) {
 
 	action := ShellAction{}
 	err = action.Run(context.New(), args)
-	if err != nil {
-		t.Fatalf("running shell action failed %v", err)
-	}
+	assert.NotError(t, err, "running action")
 
 	// -------
 
 	files, err := os.ReadDir(tempDir)
-	if err != nil {
-		t.Fatalf("reading file failed %v", err)
-	}
+	assert.NotError(t, err, "reading file")
 
-	if len(files) != 1 {
-		t.Fatalf("expected file size in temp dir is 1, found %d", len(files))
-	}
+	assert.Equal(t, 1, len(files))
 
 	file := files[0]
-	if testFileName != file.Name() {
-		t.Fatalf("expected file name in temp dir is %s, actual %s", testFileName, file.Name())
-	}
+	assert.Equal(t, testFileName, file.Name())
 }
 
 func TestShellActionWithError(t *testing.T) {
@@ -55,7 +46,5 @@ func TestShellActionWithError(t *testing.T) {
 
 	action := ShellAction{}
 	err := action.Run(context.New(), args)
-	if err == nil {
-		t.Fatal("expected to have an error, but did not failed")
-	}
+	assert.Error(t, err, "running action should've been failed")
 }

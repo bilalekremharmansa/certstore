@@ -6,14 +6,13 @@ import (
 	"os"
 	"testing"
 
+	"bilalekrem.com/certstore/internal/assert"
 	"bilalekrem.com/certstore/internal/testutils"
 )
 
 func TestNewSimpleCertificateService(t *testing.T) {
 	dir, err := ioutil.TempDir("/tmp", "test_new_cert_service")
-	if err != nil {
-		t.Fatalf("error occurred while creating temp dir, %v", err)
-	}
+	assert.NotError(t, err, "creating temp dir failed")
 	defer os.RemoveAll(dir)
 
 	// ------
@@ -33,28 +32,20 @@ func TestNewSimpleCertificateService(t *testing.T) {
 	args["certificate"] = certPath
 
 	service := NewService(Simple, args)
-	if service == nil {
-		t.Fatal("error occurred while creating new simple service")
-	}
+	assert.NotNil(t, service)
 }
 
 func TestCACertificateService(t *testing.T) {
 	service := NewService(CertificateAuthority, nil)
-	if service == nil {
-		t.Fatal("error occurred while creating new ca certificate service")
-	}
+	assert.NotNil(t, service)
 }
 
 func TestUnknownServiceShouldBeNil(t *testing.T) {
 	service := NewService(Unknown, nil)
-	if service != nil {
-		t.Fatal("service must be null, because service type is unknown.")
-	}
+	assert.Nil(t, service)
 }
 
 func TestUnrelatedServiceShouldBeNil(t *testing.T) {
 	service := NewService("test", nil)
-	if service != nil {
-		t.Fatal("service must be null, because service type is unrelated.")
-	}
+	assert.Nil(t, service)
 }

@@ -3,6 +3,7 @@ package certstore
 import (
 	"testing"
 
+	"bilalekrem.com/certstore/internal/assert"
 	certificate_service "bilalekrem.com/certstore/internal/certificate/service"
 	"bilalekrem.com/certstore/internal/certificate/x509utils"
 	"bilalekrem.com/certstore/internal/testutils"
@@ -11,13 +12,9 @@ import (
 
 func TestCreateCertStore(t *testing.T) {
 	store, err := NewWithoutCA()
-	if err != nil {
-		t.Fatalf("creating cert store failed, %v", err)
-	}
+	assert.NotError(t, err, "creating cert store failed")
 
-	if store == nil {
-		t.Fatalf("certstore is nil, should've been created\n")
-	}
+	assert.NotNil(t, store)
 }
 
 func TestCreateCertStoreWithCA(t *testing.T) {
@@ -25,19 +22,12 @@ func TestCreateCertStoreWithCA(t *testing.T) {
 	pemPrivateKey := testutils.GetCAPrivateKey()
 
 	store, err := New([]byte(pemPrivateKey), []byte(pemCert))
-	if err != nil {
-		t.Fatalf("creating cert store failed, %v", err)
-	}
+	assert.NotError(t, err, "creating cert store failed")
 
 	// --
 
-	if store == nil {
-		t.Fatalf("cerstore is nil, should've been created\n")
-	}
-
-	if store.clusterService == nil {
-		t.Fatalf("ca key and cert is provided, store.clusterService should not be nil")
-	}
+	assert.NotNil(t, store)
+	assert.NotNil(t, store.clusterService)
 }
 
 func TestCreateCertStoreWithUnvalidCA(t *testing.T) {
@@ -45,9 +35,8 @@ func TestCreateCertStoreWithUnvalidCA(t *testing.T) {
 	pemPrivateKey := testutils.GetCAPrivateKey()
 
 	_, err := New([]byte(pemPrivateKey), []byte(pemCert))
-	if err == nil {
-		t.Fatal("provided cert is invalid, error expected but did not returned")
-	}
+
+	assert.Error(t, err, "provided cert is invalid error expected")
 }
 
 func TestCreateCertStoreWithUnvalidCAKey(t *testing.T) {
@@ -55,76 +44,47 @@ func TestCreateCertStoreWithUnvalidCAKey(t *testing.T) {
 	pemPrivateKey := "invalid key"
 
 	_, err := New([]byte(pemPrivateKey), []byte(pemCert))
-	if err == nil {
-		t.Fatal("provided cert key is invalid, error expected but did not returned")
-	}
+	assert.Error(t, err, "provided cert key is invalid error expected")
 }
 
 func TestCreateCA(t *testing.T) {
 	store, _ := NewWithoutCA()
 	clusterName := "my-cluster"
 	certificate, err := store.CreateClusterCACertificate(clusterName)
-	if err != nil {
-		t.Fatalf("cluster ca certificate could not be created, %v", err)
-	}
+	assert.NotError(t, err, "cluster ca certificate could not be created")
 
 	// -----
 
 	cert, err := x509utils.ParsePemCertificate(certificate.Certificate)
-	if err != nil {
-		t.Fatalf("generated certificate could not be parsed, %v", err)
-	}
+	assert.NotError(t, err, "certificate could not be parsed")
 
-	if !cert.IsCA {
-		t.Fatal("generated certificate is not CA")
-	}
-
-	if cert.Subject.CommonName != cert.Issuer.CommonName {
-		t.Fatalf("CA subject and issuer common name are different, expected to be same, subject %s, issuer %s",
-			cert.Subject.CommonName, cert.Issuer.CommonName)
-	}
-
-	if cert.Subject.CommonName != clusterName {
-		t.Fatalf("ca common name is not as expected, expected: [%s], actual: [%s]", clusterName, cert.Subject.CommonName)
-	}
+	assert.True(t, cert.IsCA)
+	assert.EqualM(t, cert.Subject.CommonName, cert.Issuer.CommonName, "CA subject and issuer common name are different")
+	assert.Equal(t, clusterName, cert.Subject.CommonName)
 }
 
 func TestCreateServerCert(t *testing.T) {
 	store := createCertStore(t)
 	serverName := "my-server"
 	serverCertResponse, err := store.CreateServerCertificate(serverName)
-	if err != nil {
-		t.Fatalf("server certificate could not be created, %v", err)
-	}
+	assert.NotError(t, err, "server certificate could not be created")
 
 	serverCert, err := x509utils.ParsePemCertificate(serverCertResponse.Certificate)
 
-	if serverCert.Subject.CommonName != serverName {
-		t.Fatalf("server cert common name is not as expected, expected: [%s], actual: [%s]", serverName, serverCert.Subject.CommonName)
-	}
-
-	if serverCert.IsCA {
-		t.Fatal("generated server certificate is CA, should've been server")
-	}
+	assert.Equal(t, serverName, serverCert.Subject.CommonName)
+	assert.False(t, serverCert.IsCA)
 }
 
 func TestCreateWorkerCert(t *testing.T) {
 	store := createCertStore(t)
 	workerName := "my-worker"
 	workerCertResponse, err := store.CreateWorkerCertificate(workerName)
-	if err != nil {
-		t.Fatalf("worker certificate could not be created, %v", err)
-	}
+	assert.NotError(t, err, "worker certificate could not be created")
 
 	workerCert, err := x509utils.ParsePemCertificate(workerCertResponse.Certificate)
 
-	if workerCert.Subject.CommonName != workerName {
-		t.Fatalf("worker cert common name is not as expected, expected: [%s], actual: [%s]", workerName, workerCert.Subject.CommonName)
-	}
-
-	if workerCert.IsCA {
-		t.Fatal("generated worker certificate is CA, should've been server")
-	}
+	assert.Equal(t, workerName, workerCert.Subject.CommonName)
+	assert.False(t, workerCert.IsCA)
 }
 
 func TestIssueCertificate(t *testing.T) {
@@ -163,16 +123,12 @@ func createCertStore(t *testing.T) *certStoreImpl {
 	storeWithoutCA, _ := NewWithoutCA()
 	clusterName := "my-cluster"
 	caCert, err := storeWithoutCA.CreateClusterCACertificate(clusterName)
-	if err != nil {
-		t.Fatalf("cluster ca certificate could not be created, %v", err)
-	}
+	assert.NotError(t, err, "cluster ca certificate could not be created")
 
 	// -----
 
 	store, err := New(caCert.PrivateKey, caCert.Certificate)
-	if err != nil {
-		t.Fatalf("cluster ca certificate could not be created, %v", err)
-	}
+	assert.NotError(t, err, "cluster certificate service could not be created")
 
 	return store
 }

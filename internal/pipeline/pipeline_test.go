@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"testing"
 
+	"bilalekrem.com/certstore/internal/assert"
 	"bilalekrem.com/certstore/internal/pipeline/action"
 	"bilalekrem.com/certstore/internal/pipeline/context"
 	"github.com/golang/mock/gomock"
@@ -13,9 +14,7 @@ func TestPipelineName(t *testing.T) {
 	pipelineName := "test-pipeline"
 	pipeline := New(pipelineName)
 
-	if pipeline.Name() != pipelineName {
-		t.Fatalf("pipeline name is not correct, expected: [%s], actual: [%s]", pipelineName, pipeline.Name())
-	}
+	assert.Equal(t, pipelineName, pipeline.Name())
 }
 
 func TestPipelineRunAction(t *testing.T) {
@@ -38,10 +37,7 @@ func TestPipelineRunAction(t *testing.T) {
 	// ----
 
 	err := pipeline.Run()
-	if err != nil {
-		t.Fatalf("Error occurred while running pipeline, %v", err)
-	}
-
+	assert.NotError(t, err, "running pipeline")
 }
 
 func TestPipelineRunActionWithConfig(t *testing.T) {
@@ -66,10 +62,7 @@ func TestPipelineRunActionWithConfig(t *testing.T) {
 	// ----
 
 	err := pipeline.Run()
-	if err != nil {
-		t.Fatalf("Error occurred while running pipeline, %v", err)
-	}
-
+	assert.NotError(t, err, "running pipeline")
 }
 
 func TestPipelineRunMultipleAction(t *testing.T) {
@@ -99,10 +92,7 @@ func TestPipelineRunMultipleAction(t *testing.T) {
 	// ----
 
 	err := pipeline.Run()
-	if err != nil {
-		t.Fatalf("Error occurred while running pipeline, %v", err)
-	}
-
+	assert.NotError(t, err, "running pipeline")
 }
 
 func TestNewPipelineFromConfig(t *testing.T) {
@@ -128,17 +118,12 @@ func TestNewPipelineFromConfig(t *testing.T) {
 	// ----
 
 	pipeline, err := NewFromConfig(pipelineConfig, actionStore)
-	if err != nil {
-		t.Fatalf("error occurred while initation pipeline from pipeline config, %v", err)
-	}
+	assert.NotError(t, err, "initating pipeline from config")
 
 	// ----
 
 	err = pipeline.Run()
-	if err != nil {
-		t.Fatalf("Error occurred while running pipeline, %v", err)
-	}
-
+	assert.NotError(t, err, "running pipeline")
 }
 
 func TestNewPipelineFromConfigMissingAction(t *testing.T) {
@@ -149,9 +134,7 @@ func TestNewPipelineFromConfigMissingAction(t *testing.T) {
 
 	actionStore := action.NewActionStore()
 	_, err := NewFromConfig(pipelineConfig, actionStore)
-	if err == nil {
-		t.Fatalf("error is expected beceause of missing action in action store, but not found")
-	}
+	assert.Error(t, err, "missing action in action store")
 }
 
 func TestNewPipelineFromYamlConfig(t *testing.T) {
@@ -163,9 +146,7 @@ actions:
   - name: test-action`
 
 	pipelineConfig, err := ParsePipelineConfig(pipelineYaml)
-	if err != nil {
-		t.Fatalf("error occurred while parsing pipeline pipeline config, %v", err)
-	}
+	assert.NotError(t, err, "parsing pipeline config")
 
 	// -----
 
@@ -195,16 +176,12 @@ actions:
 	// -----
 
 	pipeline, err := NewFromConfig(pipelineConfig, actionStore)
-	if err != nil {
-		t.Fatalf("error occurred while initation pipeline from pipeline config, %v", err)
-	}
+	assert.NotError(t, err, "initating pipeline from config")
 
 	// ----
 
 	err = pipeline.Run()
-	if err != nil {
-		t.Fatalf("Error occurred while running pipeline, %v", err)
-	}
+	assert.NotError(t, err, "running pipeline")
 }
 
 func TestPipelineContextStoreAndGetCustomValue(t *testing.T) {
@@ -238,25 +215,15 @@ func TestPipelineContextStoreAndGetCustomValue(t *testing.T) {
 		Do(func(ctx *context.Context, args map[string]string) error {
 			stringValue := ctx.GetValue(FIRST_ACTION_STRING_KEY)
 
-			if reflect.TypeOf(stringValue).Kind() != reflect.String {
-				t.Fatalf("Unexpected type, expected: string, found:%T", reflect.TypeOf(stringValue))
-			}
-
-			if stringValue != FIRST_ACTION_STRING_VALUE {
-				t.Fatalf("Unexpected value, expected: %s, found:%v", FIRST_ACTION_STRING_VALUE, stringValue)
-			}
+			assert.Equal(t, reflect.String, reflect.TypeOf(stringValue).Kind())
+			assert.Equal(t, stringValue, FIRST_ACTION_STRING_VALUE)
 
 			// -----
 
 			numberValue := ctx.GetValue(FIRST_ACTION_NUMBER_KEY)
 
-			if reflect.TypeOf(numberValue).Kind() != reflect.Int {
-				t.Fatalf("Unexpected type, expected: int, found:%T", reflect.TypeOf(numberValue))
-			}
-
-			if numberValue != FIRST_ACTION_NUMBER_VALUE {
-				t.Fatalf("Unexpected value, expected: %d, found:%v", FIRST_ACTION_NUMBER_VALUE, numberValue)
-			}
+			assert.Equal(t, reflect.Int, reflect.TypeOf(numberValue).Kind())
+			assert.Equal(t, numberValue, FIRST_ACTION_NUMBER_VALUE)
 
 			return nil
 		}).
@@ -267,7 +234,5 @@ func TestPipelineContextStoreAndGetCustomValue(t *testing.T) {
 	pipeline.RegisterAction(second, nil)
 
 	err := pipeline.Run()
-	if err != nil {
-		t.Fatalf("Error occurred while running pipeline, %v", err)
-	}
+	assert.NotError(t, err, "running pipeline")
 }

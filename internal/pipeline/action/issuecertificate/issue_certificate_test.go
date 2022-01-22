@@ -3,10 +3,9 @@ package issuecertificate
 import (
 	go_ctx "context"
 	b64 "encoding/base64"
-	"reflect"
-	"strings"
 	"testing"
 
+	"bilalekrem.com/certstore/internal/assert"
 	grpc "bilalekrem.com/certstore/internal/certstore/grpc/gen"
 	"bilalekrem.com/certstore/internal/pipeline/context"
 	"github.com/golang/mock/gomock"
@@ -39,22 +38,15 @@ func TestRun(t *testing.T) {
 	args := getValidArgs()
 
 	err := action.Run(ctx, args)
-	if err != nil {
-		t.Fatalf("action failed with error, %v", err)
-	}
+	assert.NotError(t, err, "running action")
 
 	// -----
 
 	certificate := ctx.GetValue(ISSUED_CERTIFICATE_CTX_KEY).([]byte)
-	if string(certificate) != expectedCertificate {
-		t.Fatalf("certificate is not put into context succesfully, found: %v", certificate)
-	}
+	assert.Equal(t, string(certificate), expectedCertificate)
 
 	privateKey := ctx.GetValue(ISSUED_PRIVATE_KEY_CTX_KEY).([]byte)
-	if string(privateKey) != expectedPrivateKey {
-		t.Fatalf("private key is not put into context succesfully, found: %v", privateKey)
-	}
-
+	assert.Equal(t, string(privateKey), expectedPrivateKey)
 }
 
 func TestRequiredArgumentIssuer(t *testing.T) {
@@ -84,9 +76,7 @@ func TestExpirationDaysConvertableInt(t *testing.T) {
 		EXPECT().
 		IssueCertificate(gomock.Any(), gomock.Any()).
 		DoAndReturn(func(_ go_ctx.Context, req *grpc.CertificateRequest, opts ...interface{}) (*grpc.CertificateResponse, error) {
-			if req.ExpirationDays != 30 {
-				t.Fatalf("expiration days is not correct, expected: 30, found:%d", req.ExpirationDays)
-			}
+			assert.Equal(t, int32(30), req.ExpirationDays)
 
 			return &grpc.CertificateResponse{
 				Certificate: "",
@@ -98,10 +88,7 @@ func TestExpirationDaysConvertableInt(t *testing.T) {
 	args[ARGS_EXPIRATION_DAYS] = "30"
 
 	err := action.Run(context.New(), args)
-	if err != nil {
-		t.Fatalf("action failed with error, %v", err)
-	}
-
+	assert.NotError(t, err, "running action")
 }
 
 func TestExpirationDaysNotConvertableInt(t *testing.T) {
@@ -111,12 +98,7 @@ func TestExpirationDaysNotConvertableInt(t *testing.T) {
 	args[ARGS_EXPIRATION_DAYS] = "thirty"
 
 	err := action.Run(context.New(), args)
-	if err == nil {
-		t.Fatalf("error expected, but could not found")
-	} else if !strings.Contains(err.Error(), "invalid syntax") {
-		t.Fatalf("invalid syntax statement is expected since str to int should be failed but not found, err: %v", err)
-	}
-
+	assert.ErrorContains(t, err, "invalid syntax")
 }
 
 func TestMultipleSANs(t *testing.T) {
@@ -131,9 +113,7 @@ func TestMultipleSANs(t *testing.T) {
 		IssueCertificate(gomock.Any(), gomock.Any()).
 		DoAndReturn(func(_ go_ctx.Context, req *grpc.CertificateRequest, opts ...interface{}) (*grpc.CertificateResponse, error) {
 			expectedSans := []string{"a.com", "b.com"}
-			if !reflect.DeepEqual(expectedSans, req.SANs) {
-				t.Fatalf("SANs is not correct, expected: %s, found:%s", expectedSans, req.SANs)
-			}
+			assert.DeepEqual(t, expectedSans, req.SANs)
 
 			return &grpc.CertificateResponse{
 				Certificate: "",
@@ -144,9 +124,7 @@ func TestMultipleSANs(t *testing.T) {
 	args := getValidArgs()
 
 	err := action.Run(context.New(), args)
-	if err != nil {
-		t.Fatalf("action failed with error, %v", err)
-	}
+	assert.NotError(t, err, "running action")
 
 }
 
@@ -162,9 +140,7 @@ func TestSingleSAN(t *testing.T) {
 		IssueCertificate(gomock.Any(), gomock.Any()).
 		DoAndReturn(func(_ go_ctx.Context, req *grpc.CertificateRequest, opts ...interface{}) (*grpc.CertificateResponse, error) {
 			expectedSans := []string{"a.com"}
-			if !reflect.DeepEqual(expectedSans, req.SANs) {
-				t.Fatalf("SANs is not correct, expected: %s, found:%s", expectedSans, req.SANs)
-			}
+			assert.DeepEqual(t, expectedSans, req.SANs)
 
 			return &grpc.CertificateResponse{
 				Certificate: "",
@@ -176,9 +152,7 @@ func TestSingleSAN(t *testing.T) {
 	args[ARGS_SANS] = "a.com"
 
 	err := action.Run(context.New(), args)
-	if err != nil {
-		t.Fatalf("action failed with error, %v", err)
-	}
+	assert.NotError(t, err, "running action")
 
 }
 
@@ -193,9 +167,7 @@ func TestEmptySAN(t *testing.T) {
 		EXPECT().
 		IssueCertificate(gomock.Any(), gomock.Any()).
 		DoAndReturn(func(_ go_ctx.Context, req *grpc.CertificateRequest, opts ...interface{}) (*grpc.CertificateResponse, error) {
-			if len(req.SANs) != 0 {
-				t.Fatalf("SANs is not correct, expected: empty, found:%s", req.SANs)
-			}
+			assert.Equal(t, 0, len(req.SANs))
 
 			return &grpc.CertificateResponse{
 				Certificate: "",
@@ -207,9 +179,7 @@ func TestEmptySAN(t *testing.T) {
 	delete(args, ARGS_SANS)
 
 	err := action.Run(context.New(), args)
-	if err != nil {
-		t.Fatalf("action failed with error, %v", err)
-	}
+	assert.NotError(t, err, "running action")
 
 }
 
@@ -222,9 +192,7 @@ func testRequiredArgument(t *testing.T, arg string) {
 	delete(args, arg)
 
 	err := action.Run(context.New(), args)
-	if err == nil || !strings.Contains(err.Error(), "required argument") {
-		t.Fatalf("required arg error is expected but not found")
-	}
+	assert.ErrorContains(t, err, "required argument")
 }
 
 func getValidArgs() map[string]string {

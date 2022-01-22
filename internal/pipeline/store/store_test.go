@@ -3,6 +3,7 @@ package store
 import (
 	"testing"
 
+	"bilalekrem.com/certstore/internal/assert"
 	"bilalekrem.com/certstore/internal/pipeline"
 )
 
@@ -15,15 +16,10 @@ func TestNew(t *testing.T) {
 	store := New(firstPipeline, secondPipeline)
 
 	retrievedFirstPipeline := store.GetPipeline("first-pipeline")
-	if retrievedFirstPipeline.Name() != "first-pipeline" {
-		t.Fatalf("unknown pipeline %s", retrievedFirstPipeline)
-	}
+	assert.Equal(t, "first-pipeline", retrievedFirstPipeline.Name())
 
 	retrievedSecondPipeline := store.GetPipeline("second-pipeline")
-	if retrievedSecondPipeline.Name() != "second-pipeline" {
-		t.Fatalf("unknown pipeline %s", retrievedSecondPipeline)
-	}
-
+	assert.Equal(t, "second-pipeline", retrievedSecondPipeline.Name())
 }
 
 func TestStore(t *testing.T) {
@@ -35,8 +31,6 @@ func TestStore(t *testing.T) {
 	store.StorePipeline(pip)
 
 	retrievedFirstPipeline := store.GetPipeline("first-pipeline")
-	if retrievedFirstPipeline.Name() != "first-pipeline" {
-		t.Fatalf("unknown pipeline %s", retrievedFirstPipeline)
-	}
+	assert.Equal(t, "first-pipeline", retrievedFirstPipeline.Name())
 
 }
