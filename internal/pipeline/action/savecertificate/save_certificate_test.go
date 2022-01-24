@@ -82,7 +82,7 @@ func TestIssuedCertificateIsNotInContext(t *testing.T) {
 	ctx.StoreValue(issuecertificate.ISSUED_PRIVATE_KEY_CTX_KEY, []byte("test"))
 
 	err := NewSaveCertificateAction().Run(ctx, args)
-	assert.ErrorContains(t, err, "not found in context")
+	assert.ErrorContains(t, err, "required context object")
 }
 
 func TestIssuedCertificateKeyIsNotInContext(t *testing.T) {
@@ -94,5 +94,5 @@ func TestIssuedCertificateKeyIsNotInContext(t *testing.T) {
 	ctx.StoreValue(issuecertificate.ISSUED_CERTIFICATE_CTX_KEY, []byte("test"))
 
 	err := NewSaveCertificateAction().Run(ctx, args)
-	assert.ErrorContains(t, err, "not found in context")
+	assert.ErrorContains(t, err, "required context object")
 }

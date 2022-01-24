@@ -1,11 +1,10 @@
 package savecertificate
 
 import (
-	"errors"
-	"fmt"
 	"io/ioutil"
 
 	"bilalekrem.com/certstore/internal/logging"
+	"bilalekrem.com/certstore/internal/pipeline/action"
 	"bilalekrem.com/certstore/internal/pipeline/action/issuecertificate"
 	"bilalekrem.com/certstore/internal/pipeline/context"
 )
@@ -58,22 +57,15 @@ func (a SaveCertificateAction) Run(ctx *context.Context, args map[string]string)
 }
 
 func validate(ctx *context.Context, args map[string]string) error {
-	_, exists := args[ARGS_CERTIFICATE_TARGET_PATH]
-	if !exists {
-		return errors.New(fmt.Sprintf("required argument: %s", ARGS_CERTIFICATE_TARGET_PATH))
+	err := action.ValidateRequiredArgs(args, ARGS_CERTIFICATE_TARGET_PATH, ARGS_CERTIFICATE_KEY_TARGET_PATH)
+	if err != nil {
+		return err
 	}
 
-	_, exists = args[ARGS_CERTIFICATE_KEY_TARGET_PATH]
-	if !exists {
-		return errors.New(fmt.Sprintf("required argument: %s", ARGS_CERTIFICATE_KEY_TARGET_PATH))
-	}
-
-	if ctx.GetValue(issuecertificate.ISSUED_CERTIFICATE_CTX_KEY) == nil {
-		return errors.New("certificate is not found in context")
-	}
-
-	if ctx.GetValue(issuecertificate.ISSUED_PRIVATE_KEY_CTX_KEY) == nil {
-		return errors.New("issued certificate private key is not found in context")
+	err = action.ValidateContextObjectExists(ctx, issuecertificate.ISSUED_CERTIFICATE_CTX_KEY,
+		issuecertificate.ISSUED_PRIVATE_KEY_CTX_KEY)
+	if err != nil {
+		return err
 	}
 
 	return nil

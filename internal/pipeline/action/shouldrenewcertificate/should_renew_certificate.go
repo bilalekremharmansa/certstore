@@ -3,12 +3,12 @@ package shouldrenewcertificate
 import (
 	"crypto/x509"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"time"
 
 	"bilalekrem.com/certstore/internal/certificate/x509utils"
 	"bilalekrem.com/certstore/internal/logging"
+	"bilalekrem.com/certstore/internal/pipeline/action"
 	"bilalekrem.com/certstore/internal/pipeline/context"
 )
 
@@ -54,9 +54,9 @@ func (a shouldRenewCertificateAction) Run(ctx *context.Context, args map[string]
 }
 
 func validate(args map[string]string) error {
-	_, exists := args[ARGS_CERTIFICATE_PATH]
-	if !exists {
-		return errors.New(fmt.Sprintf("required argument: %s", ARGS_CERTIFICATE_PATH))
+	err := action.ValidateRequiredArgs(args, ARGS_CERTIFICATE_PATH)
+	if err != nil {
+		return err
 	}
 
 	return nil

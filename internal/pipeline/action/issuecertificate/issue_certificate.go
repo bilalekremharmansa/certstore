@@ -3,13 +3,12 @@ package issuecertificate
 import (
 	go_ctx "context"
 	b64 "encoding/base64"
-	"errors"
-	"fmt"
 	"strconv"
 	"strings"
 
 	"bilalekrem.com/certstore/internal/certstore/grpc/gen"
 	"bilalekrem.com/certstore/internal/logging"
+	"bilalekrem.com/certstore/internal/pipeline/action"
 	"bilalekrem.com/certstore/internal/pipeline/context"
 )
 
@@ -96,24 +95,9 @@ func (a IssueCertificateAction) Run(ctx *context.Context, args map[string]string
 }
 
 func validate(args map[string]string) error {
-	_, exists := args[ARGS_ISSUER]
-	if !exists {
-		return errors.New(fmt.Sprintf("required argument: %s", ARGS_ISSUER))
-	}
-
-	_, exists = args[ARGS_COMMON_NAME]
-	if !exists {
-		return errors.New(fmt.Sprintf("required argument: %s", ARGS_COMMON_NAME))
-	}
-
-	_, exists = args[ARGS_EMAIL]
-	if !exists {
-		return errors.New(fmt.Sprintf("required argument: %s", ARGS_EMAIL))
-	}
-
-	_, exists = args[ARGS_EXPIRATION_DAYS]
-	if !exists {
-		return errors.New(fmt.Sprintf("required arguments: %s", ARGS_EXPIRATION_DAYS))
+	err := action.ValidateRequiredArgs(args, ARGS_ISSUER, ARGS_COMMON_NAME, ARGS_EMAIL, ARGS_EXPIRATION_DAYS)
+	if err != nil {
+		return err
 	}
 
 	return nil

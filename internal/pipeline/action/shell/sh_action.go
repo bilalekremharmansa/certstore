@@ -7,7 +7,12 @@ import (
 	"strings"
 
 	"bilalekrem.com/certstore/internal/logging"
+	"bilalekrem.com/certstore/internal/pipeline/action"
 	"bilalekrem.com/certstore/internal/pipeline/context"
+)
+
+const (
+	ARGS_COMMAND     string = "command"
 )
 
 type ShellAction struct {
@@ -18,7 +23,7 @@ func (ShellAction) Run(ctx *context.Context, args map[string]string) error {
 
 	// ----
 
-	commandStr := args["command"]
+	commandStr := args[ARGS_COMMAND]
 	splitted := strings.Split(commandStr, " ")
 
 	cmd := splitted[0]
@@ -39,9 +44,9 @@ func (ShellAction) Run(ctx *context.Context, args map[string]string) error {
 }
 
 func validate(args map[string]string) error {
-	_, exist := args["command"]
-	if !exist {
-		return errors.New("shell action expects a args.command, but could not found!")
+	err := action.ValidateRequiredArgs(args, ARGS_COMMAND)
+	if err != nil {
+		return err
 	}
 
 	return nil

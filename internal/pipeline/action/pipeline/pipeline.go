@@ -2,9 +2,9 @@ package pipeline
 
 import (
 	"errors"
-	"fmt"
 
 	"bilalekrem.com/certstore/internal/logging"
+	"bilalekrem.com/certstore/internal/pipeline/action"
 	"bilalekrem.com/certstore/internal/pipeline/context"
 	"bilalekrem.com/certstore/internal/pipeline/store"
 )
@@ -51,9 +51,9 @@ func (a pipelineAction) Run(ctx *context.Context, args map[string]string) error 
 }
 
 func validate(args map[string]string) error {
-	_, exists := args[ARGS_PIPELINE_NAME]
-	if !exists {
-		return errors.New(fmt.Sprintf("required argument: %s", ARGS_PIPELINE_NAME))
+	err := action.ValidateRequiredArgs(args, ARGS_PIPELINE_NAME)
+	if err != nil {
+		return err
 	}
 
 	return nil
