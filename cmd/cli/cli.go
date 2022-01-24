@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"go.uber.org/zap/zapcore"
 
 	"bilalekrem.com/certstore/internal/logging"
 )
@@ -17,6 +18,7 @@ var (
 )
 
 func Run() {
+	logging.ChangeLogLevel(zapcore.DebugLevel)
 	rootCmd.Execute()
 }
 

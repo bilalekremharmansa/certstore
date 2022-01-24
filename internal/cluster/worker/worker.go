@@ -11,7 +11,9 @@ import (
 	"bilalekrem.com/certstore/internal/pipeline"
 	"bilalekrem.com/certstore/internal/pipeline/action"
 	"bilalekrem.com/certstore/internal/pipeline/action/issuecertificate"
+	pipeline_action "bilalekrem.com/certstore/internal/pipeline/action/pipeline"
 	"bilalekrem.com/certstore/internal/pipeline/action/savecertificate"
+	"bilalekrem.com/certstore/internal/pipeline/action/shouldrenewcertificate"
 	"bilalekrem.com/certstore/internal/pipeline/store"
 	"google.golang.org/grpc"
 )
@@ -48,7 +50,7 @@ func NewFromConfig(conf *config.Config) (*Worker, error) {
 		return nil, err
 	}
 
-	actionStore := getActionStore(certificateServiceClient)
+	actionStore := getActionStore(certificateServiceClient, worker.pipelineStore)
 	worker.init(conf.Pipelines, actionStore)
 
 	// ----
@@ -94,18 +96,20 @@ func (w *Worker) init(pipelineConfigs []pipeline.PipelineConfig, actionStore *ac
 			return errors.New(fmt.Sprintf("creating pipeline failed, %v", err))
 		}
 
-		logging.GetLogger().Info("pipeline is created: [%s]", pip.Name())
+		logging.GetLogger().Infof("pipeline is created: [%s]", pip.Name())
 		w.pipelineStore.StorePipeline(pip)
 	}
 
 	return nil
 }
 
-func getActionStore(client *certificate_service.CertificateServiceClient) *action.ActionStore {
+func getActionStore(client *certificate_service.CertificateServiceClient, pipelineStore *store.PipelineStore) *action.ActionStore {
 	store := action.NewActionStore()
 
 	store.Put("issue-certificate", issuecertificate.NewIssueCertificateAction(*client))
 	store.Put("save-certificate", savecertificate.NewSaveCertificateAction())
+	store.Put("run-pipeline", pipeline_action.NewPipelineAction(pipelineStore))
+	store.Put("should-renew-certificate", shouldrenewcertificate.NewShouldRenewCertificateAction())
 
 	return store
 }
