@@ -6,8 +6,8 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
-	"math/big"
 	"errors"
+	"math/big"
 )
 
 func GetRandomCertificateSerialNumber() (*big.Int, error) {
@@ -21,21 +21,30 @@ func GetRandomCertificateSerialNumber() (*big.Int, error) {
 }
 
 func EncodePEMCertAndKey(privateKey *rsa.PrivateKey, cert []byte) (*bytes.Buffer, *bytes.Buffer) {
-	privateKeyPem := new(bytes.Buffer)
-	pem.Encode(privateKeyPem, &pem.Block{
-		Type:  "RSA PRIVATE KEY",
-		Bytes: x509.MarshalPKCS1PrivateKey(privateKey),
-	})
+	privateKeyPem := EncodePEMPrivateKey(privateKey)
+	certPem := EncodePEMCert(cert)
 
-	// ---
+	return privateKeyPem, certPem
+}
 
+func EncodePEMCert(cert []byte) *bytes.Buffer {
 	certPem := new(bytes.Buffer)
 	pem.Encode(certPem, &pem.Block{
 		Type:  "CERTIFICATE",
 		Bytes: cert,
 	})
 
-	return privateKeyPem, certPem
+	return certPem
+}
+
+func EncodePEMPrivateKey(privateKey *rsa.PrivateKey) *bytes.Buffer {
+	privateKeyPem := new(bytes.Buffer)
+	pem.Encode(privateKeyPem, &pem.Block{
+		Type:  "RSA PRIVATE KEY",
+		Bytes: x509.MarshalPKCS1PrivateKey(privateKey),
+	})
+
+	return privateKeyPem
 }
 
 func ParsePemPrivateKey(privateKeyBytes []byte) (*rsa.PrivateKey, error) {
