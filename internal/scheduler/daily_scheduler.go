@@ -22,7 +22,11 @@ type dailyScheduler struct {
 }
 
 func NewDailyScheduler() *dailyScheduler {
-	return &dailyScheduler{timeProvider: DEFAULT_TIME_PROVIDER}
+	return NewDailySchedulerWithTimeProvider(DEFAULT_TIME_PROVIDER)
+}
+
+func NewDailySchedulerWithTimeProvider(timeProvider TimeProvider) *dailyScheduler {
+	return &dailyScheduler{timeProvider: timeProvider}
 }
 
 func (s *dailyScheduler) Schedule(fn func()) error {

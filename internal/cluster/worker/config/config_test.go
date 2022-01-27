@@ -23,7 +23,10 @@ pipelines:
           my-arg: my-val
   - name: second-pipeline
     actions:
-      - name: second-action`
+      - name: second-action
+jobs:
+  - name: "first-pipeline job"
+    pipeline: "first-pipeline"`
 
 	config, err := Parse(configYaml)
 	assert.NotError(t, err, "parsing failed")
@@ -42,4 +45,11 @@ pipelines:
 	assert.Equal(t, 2, len(pipelines))
 	assert.Equal(t, "first-pipeline", pipelines[0].Name)
 	assert.Equal(t, 2, len(pipelines[0].Actions))
+
+	// -----
+
+	jobs := config.Jobs
+	assert.Equal(t, 1, len(jobs))
+	assert.Equal(t, "first-pipeline job", jobs[0].Name)
+	assert.Equal(t, "first-pipeline", jobs[0].Pipeline)
 }

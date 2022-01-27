@@ -43,7 +43,7 @@ func TestScheduleValidateNotRunBeforeTimeIsUp(t *testing.T) {
 		return time.Date(2022, 01, 01, 01, 59, 55, 0, time.Local)
 	}
 
-	scheduler := &dailyScheduler{timeProvider: mockTimeProvider}
+	scheduler := NewDailySchedulerWithTimeProvider(mockTimeProvider)
 
 	called := false
 	fn := func() {
