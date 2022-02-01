@@ -22,5 +22,8 @@ test:
 run-server:
 	go run cmd/main.go cluster server start --config $(SERVER_CONFIG_PATH)
 
+run-pipeline:
+	go run cmd/main.go cluster worker runPipeline --config $(WORKER_CONFIG_PATH) --pipeline $(WORKER_PIPELINE_TO_RUN)
+
 run-worker:
-	go run cmd/main.go cluster worker start --config $(WORKER_CONFIG_PATH) --pipeline $(WORKER_PIPELINE_TO_RUN)
+	go run cmd/main.go cluster worker start --config $(WORKER_CONFIG_PATH)

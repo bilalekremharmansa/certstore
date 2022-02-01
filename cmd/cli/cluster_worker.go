@@ -1,6 +1,8 @@
 package cli
 
 import (
+	"runtime"
+
 	wrk "bilalekrem.com/certstore/internal/cluster/worker"
 	"bilalekrem.com/certstore/internal/logging"
 	"github.com/spf13/cobra"
@@ -31,9 +33,9 @@ var clusterWorkerCreateCertCmd = &cobra.Command{
 	},
 }
 
-var clusterWorkerStartCmd = &cobra.Command{
-	Use:   "start",
-	Short: "start worker",
+var clusterWorkerRunPipelineCmd = &cobra.Command{
+	Use:   "runPipeline",
+	Short: "run a pipeline",
 	Run: func(cmd *cobra.Command, args []string) {
 		configPath, _ := cmd.Flags().GetString("config")
 		pipelineToRun, _ := cmd.Flags().GetString("pipeline")
@@ -58,6 +60,29 @@ var clusterWorkerStartCmd = &cobra.Command{
 	},
 }
 
+var clusterWorkerStartCmd = &cobra.Command{
+	Use:   "start",
+	Short: "start worker",
+	Run: func(cmd *cobra.Command, args []string) {
+		configPath, _ := cmd.Flags().GetString("config")
+
+		// caCertPath, _ := cmd.Flags().GetString("cacert")
+		// workerCertPath, _ := cmd.Flags().GetString("cert")
+		// workerCertKeyPath, _ := cmd.Flags().GetString("certkey")
+
+		// -----
+
+		_, err := wrk.NewFromFile(configPath)
+		if err != nil {
+			error("error occurred: [%v]\n", err)
+		}
+
+		// ---
+
+		runtime.Goexit()
+	},
+}
+
 func init() {
 	clusterWorkerCreateCertCmd.Flags().String("address", "", "address of worker")
 	clusterWorkerCreateCertCmd.Flags().String("cacert", "", "certificate authority file path in PEM format")
@@ -67,19 +92,25 @@ func init() {
 	clusterWorkerCreateCertCmd.MarkFlagRequired("cakey")
 
 	// ------
+	clusterWorkerRunPipelineCmd.Flags().String("config", "", "worker config file path")
+	clusterWorkerRunPipelineCmd.MarkFlagRequired("config")
+	clusterWorkerRunPipelineCmd.Flags().String("pipeline", "", "pipeline name to run")
+	clusterWorkerRunPipelineCmd.MarkFlagRequired("pipeline")
+
+	// clusterWorkerRunPipelineCmd.Flags().String("cacert", "", "CA certificate file for verifying the server")
+	// clusterWorkerRunPipelineCmd.Flags().String("cert", "", "x509 certificate file for mTLS")
+	// clusterWorkerRunPipelineCmd.Flags().String("certkey", "", "x509 private key file for mTLS")
+	// clusterWorkerRunPipelineCmd.MarkFlagRequired("cacert")
+	// clusterWorkerRunPipelineCmd.MarkFlagRequired("cert")
+	// clusterWorkerRunPipelineCmd.MarkFlagRequired("certkey")
+
+	// ------
+
 	clusterWorkerStartCmd.Flags().String("config", "", "worker config file path")
 	clusterWorkerStartCmd.MarkFlagRequired("config")
-	clusterWorkerStartCmd.Flags().String("pipeline", "", "pipeline name to run")
-	clusterWorkerStartCmd.MarkFlagRequired("pipeline")
-
-	// clusterWorkerStartCmd.Flags().String("cacert", "", "CA certificate file for verifying the server")
-	// clusterWorkerStartCmd.Flags().String("cert", "", "x509 certificate file for mTLS")
-	// clusterWorkerStartCmd.Flags().String("certkey", "", "x509 private key file for mTLS")
-	// clusterWorkerStartCmd.MarkFlagRequired("cacert")
-	// clusterWorkerStartCmd.MarkFlagRequired("cert")
-	// clusterWorkerStartCmd.MarkFlagRequired("certkey")
 
 	clusterCmd.AddCommand(clusterWorkerCmd)
 	clusterWorkerCmd.AddCommand(clusterWorkerCreateCertCmd)
+	clusterWorkerCmd.AddCommand(clusterWorkerRunPipelineCmd)
 	clusterWorkerCmd.AddCommand(clusterWorkerStartCmd)
 }
