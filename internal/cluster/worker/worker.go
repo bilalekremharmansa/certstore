@@ -7,6 +7,7 @@ import (
 
 	certificate_service "bilalekrem.com/certstore/internal/certstore/grpc/gen"
 	"bilalekrem.com/certstore/internal/cluster/worker/config"
+	"bilalekrem.com/certstore/internal/job"
 	"bilalekrem.com/certstore/internal/logging"
 	"bilalekrem.com/certstore/internal/pipeline"
 	"bilalekrem.com/certstore/internal/pipeline/action"
@@ -15,11 +16,13 @@ import (
 	"bilalekrem.com/certstore/internal/pipeline/action/savecertificate"
 	"bilalekrem.com/certstore/internal/pipeline/action/shouldrenewcertificate"
 	"bilalekrem.com/certstore/internal/pipeline/store"
+	"bilalekrem.com/certstore/internal/scheduler"
 	"google.golang.org/grpc"
 )
 
 type Worker struct {
 	pipelineStore *store.PipelineStore
+	jobs          []job.Job
 }
 
 func NewFromFile(path string) (*Worker, error) {
@@ -39,6 +42,7 @@ func NewFromFile(path string) (*Worker, error) {
 func NewFromConfig(conf *config.Config) (*Worker, error) {
 	worker := &Worker{
 		pipelineStore: store.New(),
+		jobs:          []job.Job{},
 	}
 
 	// ----
@@ -51,7 +55,7 @@ func NewFromConfig(conf *config.Config) (*Worker, error) {
 	}
 
 	actionStore := getActionStore(certificateServiceClient, worker.pipelineStore)
-	worker.init(conf.Pipelines, actionStore)
+	worker.init(conf.Pipelines, actionStore, conf.Jobs)
 
 	// ----
 
@@ -87,7 +91,7 @@ func getCertificateServiceClient(conf *config.ClusterConfig) (*certificate_servi
 	return &client, nil
 }
 
-func (w *Worker) init(pipelineConfigs []pipeline.PipelineConfig, actionStore *action.ActionStore) error {
+func (w *Worker) init(pipelineConfigs []pipeline.PipelineConfig, actionStore *action.ActionStore, jobConfigs []config.JobConfig) error {
 	logging.GetLogger().Info("Initializing worker with pipeline configs..")
 	for _, pipelineConfig := range pipelineConfigs {
 		pip, err := pipeline.NewFromConfig(&pipelineConfig, actionStore)
@@ -98,6 +102,25 @@ func (w *Worker) init(pipelineConfigs []pipeline.PipelineConfig, actionStore *ac
 
 		logging.GetLogger().Infof("pipeline is created: [%s]", pip.Name())
 		w.pipelineStore.StorePipeline(pip)
+	}
+
+	// ----
+
+	for _, jobConfig := range jobConfigs {
+		dailyScheduler := scheduler.NewDailyScheduler()
+
+		pip := w.pipelineStore.GetPipeline(jobConfig.Pipeline)
+		if pip == nil {
+			logging.GetLogger().Errorf("pipeline not found, %s", jobConfig.Pipeline)
+			return errors.New(fmt.Sprintf("pipeline not found, %s", jobConfig.Pipeline))
+		}
+		pipelineJob := job.NewPipelineJob(jobConfig.Name, dailyScheduler, pip)
+		err := pipelineJob.Execute()
+		if err != nil {
+			logging.GetLogger().Errorf("Running job failed, %s", jobConfig.Pipeline)
+			return err
+		}
+		w.jobs = append(w.jobs, pipelineJob)
 	}
 
 	return nil
