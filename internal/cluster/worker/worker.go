@@ -55,7 +55,7 @@ func NewFromConfig(conf *config.Config) (*Worker, error) {
 	}
 
 	actionStore := getActionStore(certificateServiceClient, worker.pipelineStore)
-	worker.init(conf.Pipelines, actionStore, conf.Jobs)
+	worker.init(conf, actionStore)
 
 	// ----
 
@@ -91,7 +91,21 @@ func getCertificateServiceClient(conf *config.ClusterConfig) (*certificate_servi
 	return &client, nil
 }
 
-func (w *Worker) init(pipelineConfigs []pipeline.PipelineConfig, actionStore *action.ActionStore, jobConfigs []config.JobConfig) error {
+func (w *Worker) init(conf *config.Config, actionStore *action.ActionStore) error {
+	err := w.initPipelines(conf.Pipelines, actionStore)
+	if err != nil {
+		return err
+	}
+
+	err = w.initJobs(conf.Jobs)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (w *Worker) initPipelines(pipelineConfigs []pipeline.PipelineConfig, actionStore *action.ActionStore) error {
 	logging.GetLogger().Info("Initializing worker with pipeline configs..")
 	for _, pipelineConfig := range pipelineConfigs {
 		pip, err := pipeline.NewFromConfig(&pipelineConfig, actionStore)
@@ -104,8 +118,11 @@ func (w *Worker) init(pipelineConfigs []pipeline.PipelineConfig, actionStore *ac
 		w.pipelineStore.StorePipeline(pip)
 	}
 
-	// ----
+	return nil
+}
 
+func (w *Worker) initJobs(jobConfigs []config.JobConfig) error {
+	logging.GetLogger().Info("Initializing worker with job configs..")
 	for _, jobConfig := range jobConfigs {
 		dailyScheduler := scheduler.NewDailyScheduler()
 

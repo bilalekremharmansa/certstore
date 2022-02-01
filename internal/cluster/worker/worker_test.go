@@ -26,8 +26,8 @@ func TestInitPipelineConfigSuccess(t *testing.T) {
 				{Name: "action-two"},
 			}},
 	}
-	err := worker.init(pipelineConfigs, actionStore, []config.JobConfig{})
-	assert.NotError(t, err, "initialization failed")
+	err := worker.initPipelines(pipelineConfigs, actionStore)
+	assert.NotError(t, err, "pipeline initialization failed")
 }
 
 func TestInitPipelineConfigFail(t *testing.T) {
@@ -45,7 +45,7 @@ func TestInitPipelineConfigFail(t *testing.T) {
 				{Name: "action-two"},
 			}},
 	}
-	err := worker.init(pipelineConfigs, actionStore, []config.JobConfig{})
+	err := worker.initPipelines(pipelineConfigs, actionStore)
 	assert.Error(t, err, "should've been failed, action-two is missing in store")
 }
 
@@ -68,8 +68,11 @@ func TestInitJobConfigSuccess(t *testing.T) {
 		{Name: "test job", Pipeline: "test-pipeline"},
 	}
 
-	err := worker.init(pipelineConfigs, actionStore, jobConfigs)
-	assert.NotError(t, err, "initialization failed")
+	err := worker.initPipelines(pipelineConfigs, actionStore)
+	assert.NotError(t, err, "pipeline initialization failed")
+
+	err = worker.initJobs(jobConfigs)
+	assert.NotError(t, err, "job initialization failed")
 }
 
 func TestInitJobConfigFailUnknownPipeline(t *testing.T) {
@@ -83,6 +86,9 @@ func TestInitJobConfigFailUnknownPipeline(t *testing.T) {
 		{Name: "test job", Pipeline: "test-pipeline"},
 	}
 
-	err := worker.init(pipelineConfigs, nil, jobConfigs)
+	err := worker.initPipelines(pipelineConfigs, nil)
+	assert.NotError(t, err, "pipeline initialization failed")
+
+	err = worker.initJobs(jobConfigs)
 	assert.ErrorContains(t, err, "pipeline not found")
 }
