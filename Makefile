@@ -13,6 +13,7 @@ generate-mock:
 	mockgen -source=internal/certificate/service/service.go -destination internal/certificate/service/mock_service.go -package=service
 	mockgen -source=internal/certstore/certstore.go -destination internal/certstore/mock_certstore.go -package=certstore
 	mockgen -source=internal/certstore/grpc/gen/certificate_service_grpc.pb.go -destination internal/certstore/grpc/gen/mock_certificate_service.pb.go -package=gen
+	mockgen -source=internal/lego/adapter.go -destination internal/lego/mock_adapter.go -package=lego
 
 test:
 	go test ./...
