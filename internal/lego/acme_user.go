@@ -6,7 +6,7 @@ import (
 
 	"bilalekrem.com/certstore/internal/certificate/x509utils"
 	"bilalekrem.com/certstore/internal/logging"
-	"github.com/go-acme/lego/registration"
+	"github.com/go-acme/lego/v4/registration"
 )
 
 type AcmeUser struct {

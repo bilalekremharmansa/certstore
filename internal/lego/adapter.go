@@ -1,7 +1,7 @@
 package lego
 
 import (
-	"github.com/go-acme/lego/certificate"
+	"github.com/go-acme/lego/v4/certificate"
 )
 
 type LegoAdapter interface {

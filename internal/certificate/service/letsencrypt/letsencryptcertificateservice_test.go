@@ -6,7 +6,7 @@ import (
 	"bilalekrem.com/certstore/internal/assert"
 	"bilalekrem.com/certstore/internal/certificate/service"
 	"bilalekrem.com/certstore/internal/lego"
-	"github.com/go-acme/lego/certificate"
+	"github.com/go-acme/lego/v4/certificate"
 	"github.com/golang/mock/gomock"
 )
 

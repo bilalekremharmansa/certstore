@@ -9,7 +9,7 @@ import (
 
 	"bilalekrem.com/certstore/internal/assert"
 	"bilalekrem.com/certstore/internal/certificate/x509utils"
-	real_lego "github.com/go-acme/lego/lego"
+	real_lego "github.com/go-acme/lego/v4/lego"
 )
 
 func TestNewAdapterWithNewUserRegistration(t *testing.T) {

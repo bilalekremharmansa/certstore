@@ -7,11 +7,11 @@ import (
 
 	"bilalekrem.com/certstore/internal/certificate/x509utils"
 	"bilalekrem.com/certstore/internal/logging"
-	"github.com/go-acme/lego/certcrypto"
-	"github.com/go-acme/lego/certificate"
-	"github.com/go-acme/lego/challenge"
-	real_lego "github.com/go-acme/lego/lego"
-	"github.com/go-acme/lego/registration"
+	"github.com/go-acme/lego/v4/certcrypto"
+	"github.com/go-acme/lego/v4/certificate"
+	"github.com/go-acme/lego/v4/challenge"
+	real_lego "github.com/go-acme/lego/v4/lego"
+	"github.com/go-acme/lego/v4/registration"
 )
 
 type legoAdapterImpl struct {
@@ -55,6 +55,7 @@ func NewAdapterWithNewUserRegistration(userEmail string, userPrivateKeyPath stri
 func (c *legoAdapterImpl) Obtain(req certificate.ObtainRequest) (*certificate.Resource, error) {
 	certificates, err := c.legoClient.Certificate.Obtain(req)
 	if err != nil {
+		logging.GetLogger().Errorf("Obtaining certificate failed request:%v, %v", req, err)
 		return nil, err
 	}
 

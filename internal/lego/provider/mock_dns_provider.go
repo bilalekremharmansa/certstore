@@ -2,7 +2,7 @@ package provider
 
 import (
 	"bilalekrem.com/certstore/internal/logging"
-	"github.com/go-acme/lego/challenge/dns01"
+	"github.com/go-acme/lego/v4/challenge/dns01"
 )
 
 type MockDNSProvider struct {

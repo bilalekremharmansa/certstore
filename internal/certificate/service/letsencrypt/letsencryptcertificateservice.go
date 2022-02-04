@@ -8,9 +8,9 @@ import (
 	"bilalekrem.com/certstore/internal/lego"
 	"bilalekrem.com/certstore/internal/lego/provider"
 	"bilalekrem.com/certstore/internal/logging"
-	"github.com/go-acme/lego/certificate"
-	"github.com/go-acme/lego/challenge"
-	real_lego "github.com/go-acme/lego/lego"
+	"github.com/go-acme/lego/v4/certificate"
+	"github.com/go-acme/lego/v4/challenge"
+	real_lego "github.com/go-acme/lego/v4/lego"
 )
 
 type letsEncryptCertificateService struct {

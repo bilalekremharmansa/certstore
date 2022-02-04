@@ -7,7 +7,7 @@ package lego
 import (
 	reflect "reflect"
 
-	certificate "github.com/go-acme/lego/certificate"
+	certificate "github.com/go-acme/lego/v4/certificate"
 	gomock "github.com/golang/mock/gomock"
 )
 
