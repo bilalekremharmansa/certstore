@@ -69,8 +69,8 @@ func validate(config *Config) error {
 		}
 
 		if issuerConfig.Type != service_factory.Simple &&
-			issuerConfig.Type != service_factory.CertificateAuthority {
-
+			issuerConfig.Type != service_factory.CertificateAuthority &&
+			issuerConfig.Type != service_factory.LetsEncrypt {
 			return errors.New(fmt.Sprintf("issuer config service type is unknown, 'ServiceType' is required, %s",
 				string(issuerConfig.Type)))
 		}
