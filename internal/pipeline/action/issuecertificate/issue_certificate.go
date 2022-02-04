@@ -42,28 +42,13 @@ func (a IssueCertificateAction) Run(ctx *context.Context, args map[string]string
 	// --
 
 	issuer := args[ARGS_ISSUER]
-
-	expirationDays, err := strconv.Atoi(args[ARGS_EXPIRATION_DAYS])
+	request, err := createCertificateRequest(args)
 	if err != nil {
-		logging.GetLogger().Errorf("str to int conversion failed for action arg: expiration-days, %v", err)
+		logging.GetLogger().Errorf("creating certificate request %v", err)
 		return err
 	}
 
-	var sans []string
-	if args[ARGS_SANS] != "" {
-		sans = strings.Split(args[ARGS_SANS], ";")
-	}
-
-	// ----
-
-	request := &gen.CertificateRequest{
-		Issuer:         issuer,
-		CommonName:     args[ARGS_COMMON_NAME],
-		Email:          args[ARGS_EMAIL],
-		Organization:   args[ARGS_ORGANIZATION],
-		ExpirationDays: int32(expirationDays),
-		SANs:           sans,
-	}
+	// -----
 
 	logging.GetLogger().Debugf("Issuing certificate for issuer: [%s]", issuer)
 	response, err := a.client.IssueCertificate(go_ctx.TODO(), request)
@@ -95,10 +80,47 @@ func (a IssueCertificateAction) Run(ctx *context.Context, args map[string]string
 }
 
 func validate(args map[string]string) error {
-	err := action.ValidateRequiredArgs(args, ARGS_ISSUER, ARGS_COMMON_NAME, ARGS_EMAIL, ARGS_EXPIRATION_DAYS)
+	err := action.ValidateRequiredArgs(args, ARGS_ISSUER, ARGS_COMMON_NAME)
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func createCertificateRequest(args map[string]string) (*gen.CertificateRequest, error) {
+	issuer := args[ARGS_ISSUER]
+
+	request := &gen.CertificateRequest{
+		Issuer:     issuer,
+		CommonName: args[ARGS_COMMON_NAME],
+	}
+
+	expirationDaysStr, exists := args[ARGS_EXPIRATION_DAYS]
+	if exists {
+		expirationDays, err := strconv.Atoi(expirationDaysStr)
+		if err != nil {
+			logging.GetLogger().Errorf("str to int conversion failed for action arg: expiration-days, %v", err)
+			return nil, err
+		}
+
+		request.ExpirationDays = int32(expirationDays)
+	}
+
+	email, exists := args[ARGS_EMAIL]
+	if exists {
+		request.Email = email
+	}
+
+	organization, exists := args[ARGS_ORGANIZATION]
+	if exists {
+		request.Organization = organization
+	}
+
+	sansStr, exists := args[ARGS_SANS]
+	if exists && sansStr != "" {
+		request.SANs = strings.Split(args[ARGS_SANS], ";")
+	}
+
+	return request, nil
 }

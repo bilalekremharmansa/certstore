@@ -57,14 +57,6 @@ func TestRequiredArgumentCommonName(t *testing.T) {
 	testRequiredArgument(t, ARGS_COMMON_NAME)
 }
 
-func TestRequiredArgumentEmail(t *testing.T) {
-	testRequiredArgument(t, ARGS_EMAIL)
-}
-
-func TestRequiredArgumentExpirationDays(t *testing.T) {
-	testRequiredArgument(t, ARGS_EXPIRATION_DAYS)
-}
-
 func TestExpirationDaysConvertableInt(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
