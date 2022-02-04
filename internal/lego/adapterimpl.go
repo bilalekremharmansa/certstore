@@ -95,14 +95,33 @@ func createAndRegisterNewUser(email string, userPrivateKeyPath string, caDirUrl 
 	}
 	user.registration = reg
 
-	// -----
+	// ----
 
-	encodedPrivateKey := x509utils.EncodePEMPrivateKey(privateKey)
-	err = ioutil.WriteFile(userPrivateKeyPath, encodedPrivateKey.Bytes(), 0666)
+	err = saveNewUserAssets(user, userPrivateKeyPath)
 	if err != nil {
-		logging.GetLogger().Errorf("write generate user private key to file failed %v", err)
+		logging.GetLogger().Errorf("saving acme user assets %v", err)
 		return nil, err
 	}
 
 	return user, nil
+}
+
+func saveNewUserAssets(user *AcmeUser, userPrivateKeyPath string) error {
+	privateKey := user.GetPrivateKey().(*rsa.PrivateKey)
+	encodedPrivateKey := x509utils.EncodePEMPrivateKey(privateKey)
+	err := ioutil.WriteFile(userPrivateKeyPath, encodedPrivateKey.Bytes(), 0666)
+	if err != nil {
+		logging.GetLogger().Errorf("write generate user private key to file failed %v", err)
+		return err
+	}
+
+	accountUriPath := userPrivateKeyPath + ".uri"
+	reg := user.GetRegistration()
+	err = ioutil.WriteFile(accountUriPath, []byte(reg.URI), 0666)
+	if err != nil {
+		logging.GetLogger().Errorf("write account uri to file failed %v", err)
+		return err
+	}
+
+	return nil
 }

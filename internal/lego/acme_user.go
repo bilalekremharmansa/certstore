@@ -32,7 +32,17 @@ func NewAcmeUserWithPrivateKeyFile(email string, privateKeyPath string) (*AcmeUs
 		return nil, err
 	}
 
-	return NewAcmeUser(email, privateKey)
+	// ---
+
+	accountUriPath := privateKeyPath + ".uri"
+	accountUriContent, err := ioutil.ReadFile(accountUriPath)
+	if err != nil {
+		logging.GetLogger().Errorf("reading account uri failed %v", err)
+		return nil, err
+	}
+
+	reg := &registration.Resource{URI: string(accountUriContent)}
+	return &AcmeUser{email: email, key: privateKey, registration: reg}, nil
 }
 
 func (u *AcmeUser) GetEmail() string {
