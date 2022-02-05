@@ -1,7 +1,12 @@
 include .env
 export
 
-.PHONY: generate-proto
+.PHONY: generate-proto build
+
+define build_go_file
+	GOOS=windows GOARCH=amd64 go build -o build/certstore.exe cmd/main.go
+	GOOS=linux go build -o build/cerstore cmd/main.go
+endef
 
 generate-proto:
 	@PATH="$(PATH):$(go env GOPATH)/bin" $(shell protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative internal/grpc/proto/*.proto)
@@ -18,7 +23,8 @@ generate-mock:
 test:
 	go test ./...
 
-
+build:
+	$(call build_go_file)
 
 run-server:
 	go run cmd/main.go cluster server start --config $(SERVER_CONFIG_PATH)
