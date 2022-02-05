@@ -12,6 +12,7 @@ import (
 	"github.com/go-acme/lego/v4/challenge"
 	real_lego "github.com/go-acme/lego/v4/lego"
 	"github.com/go-acme/lego/v4/registration"
+	"github.com/go-acme/lego/v4/challenge/dns01"
 )
 
 type legoAdapterImpl struct {
@@ -31,7 +32,7 @@ func NewAdapter(user *AcmeUser, provider challenge.Provider, caDirUrl string) (*
 
 	// -----
 
-	err = client.Challenge.SetDNS01Provider(provider)
+	err = client.Challenge.SetDNS01Provider(provider, dns01.DisableCompletePropagationRequirement())
 	if err != nil {
 		logging.GetLogger().Errorf("setting new dns 01 provider failed %v", err)
 		return nil, err
