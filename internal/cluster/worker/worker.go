@@ -14,6 +14,7 @@ import (
 	"bilalekrem.com/certstore/internal/pipeline/action/issuecertificate"
 	pipeline_action "bilalekrem.com/certstore/internal/pipeline/action/pipeline"
 	"bilalekrem.com/certstore/internal/pipeline/action/savecertificate"
+	"bilalekrem.com/certstore/internal/pipeline/action/shell"
 	"bilalekrem.com/certstore/internal/pipeline/action/shouldrenewcertificate"
 	"bilalekrem.com/certstore/internal/pipeline/store"
 	"bilalekrem.com/certstore/internal/scheduler"
@@ -146,6 +147,7 @@ func (w *Worker) initJobs(jobConfigs []config.JobConfig) error {
 func getActionStore(client *certificate_service.CertificateServiceClient, pipelineStore *store.PipelineStore) *action.ActionStore {
 	store := action.NewActionStore()
 
+	store.Put("sh", shell.NewShellAction())
 	store.Put("issue-certificate", issuecertificate.NewIssueCertificateAction(*client))
 	store.Put("save-certificate", savecertificate.NewSaveCertificateAction())
 	store.Put("run-pipeline", pipeline_action.NewPipelineAction(pipelineStore))

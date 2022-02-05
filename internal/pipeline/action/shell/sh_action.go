@@ -1,4 +1,4 @@
-package action
+package shell
 
 import (
 	"errors"
@@ -12,13 +12,17 @@ import (
 )
 
 const (
-	ARGS_COMMAND     string = "command"
+	ARGS_COMMAND string = "command"
 )
 
-type ShellAction struct {
+type shellAction struct {
 }
 
-func (ShellAction) Run(ctx *context.Context, args map[string]string) error {
+func NewShellAction() *shellAction {
+	return &shellAction{}
+}
+
+func (shellAction) Run(ctx *context.Context, args map[string]string) error {
 	validate(args)
 
 	// ----
