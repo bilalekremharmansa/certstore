@@ -6,7 +6,8 @@ import (
 
 	"bilalekrem.com/certstore/internal/certificate/service"
 	"bilalekrem.com/certstore/internal/lego"
-	"bilalekrem.com/certstore/internal/lego/provider"
+	"bilalekrem.com/certstore/internal/lego/providers/mock"
+	"bilalekrem.com/certstore/internal/lego/providers/windns"
 	"bilalekrem.com/certstore/internal/logging"
 	"github.com/go-acme/lego/v4/certificate"
 	"github.com/go-acme/lego/v4/challenge"
@@ -98,7 +99,9 @@ func validateCertificateRequest(req *service.NewCertificateRequest) error {
 
 func getProvider(providerName string) (challenge.Provider, error) {
 	if providerName == "mock" {
-		return &provider.MockDNSProvider{}, nil
+		return &mock.MockDNSProvider{}, nil
+	} else if providerName == "windns" {
+		return windns.NewWinDnsProvider(), nil
 	}
 
 	logging.GetLogger().Errorf("lego challenge not found with name, %s", providerName)

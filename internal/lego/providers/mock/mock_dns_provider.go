@@ -1,4 +1,4 @@
-package provider
+package mock
 
 import (
 	"bilalekrem.com/certstore/internal/logging"

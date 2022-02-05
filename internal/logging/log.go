@@ -19,7 +19,12 @@ func init() {
 		atom,
 	)).Sugar()
 
-	atom.SetLevel(zap.ErrorLevel)
+	logLevel := zap.ErrorLevel
+	if os.Getenv("ENABLE_DEBUG_LEVEL") == "true" {
+		logLevel = zap.DebugLevel
+	}
+
+	atom.SetLevel(logLevel)
 }
 
 func GetLogger() *zap.SugaredLogger {
