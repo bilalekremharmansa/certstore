@@ -17,14 +17,14 @@ var clusterWorkerCreateCertCmd = &cobra.Command{
 	Use:   "createCert",
 	Short: "create worker certificate and key",
 	Run: func(cmd *cobra.Command, args []string) {
-		advertisedName, _ := cmd.Flags().GetString("address")
+		name, _ := cmd.Flags().GetString("name")
 		caCertPath, _ := cmd.Flags().GetString("cacert")
 		caKeyPath, _ := cmd.Flags().GetString("cakey")
 
 		// ---
 
 		logging.GetLogger().Info("creating worker cert")
-		certificate, err := getCertstoreWithCA(caKeyPath, caCertPath).CreateServerCertificate(advertisedName)
+		certificate, err := getCertstoreWithCA(caKeyPath, caCertPath).CreateWorkerCertificate(name)
 		if err != nil {
 			error("error occurred: [%v]\n", err)
 		}
@@ -84,10 +84,10 @@ var clusterWorkerStartCmd = &cobra.Command{
 }
 
 func init() {
-	clusterWorkerCreateCertCmd.Flags().String("address", "", "address of worker")
+	clusterWorkerCreateCertCmd.Flags().String("name", "", "name of worker")
 	clusterWorkerCreateCertCmd.Flags().String("cacert", "", "certificate authority file path in PEM format")
 	clusterWorkerCreateCertCmd.Flags().String("cakey", "", "certificate authority key file path in PEM format")
-	clusterWorkerCreateCertCmd.MarkFlagRequired("address")
+	clusterWorkerCreateCertCmd.MarkFlagRequired("name")
 	clusterWorkerCreateCertCmd.MarkFlagRequired("cacert")
 	clusterWorkerCreateCertCmd.MarkFlagRequired("cakey")
 

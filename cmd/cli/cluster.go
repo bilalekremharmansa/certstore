@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"io/ioutil"
+	"path/filepath"
 
 	"bilalekrem.com/certstore/internal/certificate/service"
 	"bilalekrem.com/certstore/internal/certstore"
@@ -69,8 +70,8 @@ func getCertstoreWithConfig(configPath string) certstore.CertStore {
 
 func saveCert(targetPath string, identifier string, certificate *service.NewCertificateResponse) {
 	logging.GetLogger().Infof("Saving %s certificate and key", identifier)
-	ioutil.WriteFile(targetPath+"/"+identifier+".crt", certificate.Certificate, 0644)
-	ioutil.WriteFile(targetPath+"/"+identifier+".key", certificate.PrivateKey, 0600)
+	ioutil.WriteFile(filepath.Join(targetPath, identifier+".crt"), certificate.Certificate, 0644)
+	ioutil.WriteFile(filepath.Join(targetPath, identifier+".key"), certificate.PrivateKey, 0600)
 }
 
 func createServerTLSConfig(caCertPath string, serverCertPath string, serverCertKeyPath string) *tls.Config {
