@@ -34,7 +34,7 @@ func (d *winDNSProvider) Present(domain, token, keyAuth string) error {
 }
 
 func (d *winDNSProvider) CleanUp(domain, token, keyAuth string) error {
-	fqdn, _ := dns01.GetRecord(domain, keyAuth)
+	fqdn, value := dns01.GetRecord(domain, keyAuth)
 	name, zone, err := getDnsNameAndZoneByFqdn(fqdn)
 	if err != nil {
 		return err
@@ -42,7 +42,7 @@ func (d *winDNSProvider) CleanUp(domain, token, keyAuth string) error {
 
 	// ----
 
-	err = removeTxtRecord(zone, name)
+	err = removeTxtRecord(zone, name, value)
 	if err != nil {
 		return err
 	}
@@ -80,10 +80,10 @@ func addTxtRecord(zone string, name string, txt string) error {
 	return err
 }
 
-func removeTxtRecord(zone string, name string) error {
+func removeTxtRecord(zone string, name string, txt string) error {
 	logging.GetLogger().Infof("Removing txt record name %s, zone %s", name, zone)
 
-	cmd := fmt.Sprintf("Remove-DnsServerResourceRecord -Force -RRType Txt -ZoneName %s -Name %s", zone, name)
+	cmd := fmt.Sprintf("Remove-DnsServerResourceRecord -Force -RRType Txt -ZoneName %s -Name %s -RecordData %s", zone, name, txt)
 	_, err := runPowershellCmd(cmd)
 	return err
 }
