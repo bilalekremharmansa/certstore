@@ -41,10 +41,10 @@ func (s *certificateService) IssueCertificate(_ context.Context, req *grpc.Certi
 
 func convertServiceRequestInternalRequest(req *grpc.CertificateRequest) *certificate_service.NewCertificateRequest {
 	return &certificate_service.NewCertificateRequest{
-		CommonName: req.CommonName,
-		Email: []string{req.Email},
-		Organization: []string{req.Organization},
-		ExpirationDays: int(req.ExpirationDays),
+		CommonName:              req.CommonName,
+		Email:                   []string{req.Email},
+		Organization:            []string{req.Organization},
+		ExpirationDays:          int(req.ExpirationDays),
 		SubjectAlternativeNames: req.SANs,
 	}
 }
@@ -55,6 +55,6 @@ func convertInternalResponseToServiceResponse(res *certificate_service.NewCertif
 
 	return &grpc.CertificateResponse{
 		Certificate: certificate,
-		PrivateKey: privateKey,
+		PrivateKey:  privateKey,
 	}
 }

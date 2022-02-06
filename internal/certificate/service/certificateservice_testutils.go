@@ -86,7 +86,7 @@ func testUniqueSerialNumber(t *testing.T, service *CertificateService) {
 
 func testExpirationDate(t *testing.T, service *CertificateService) {
 	expirationDays := 742
-	beforeExpirationDate := time.Now().AddDate(0, 0, expirationDays - 5)
+	beforeExpirationDate := time.Now().AddDate(0, 0, expirationDays-5)
 
 	// ----
 
@@ -99,7 +99,7 @@ func testExpirationDate(t *testing.T, service *CertificateService) {
 
 	// ---
 
-	afterExpirationDate := time.Now().AddDate(0, 0, expirationDays + 5)
+	afterExpirationDate := time.Now().AddDate(0, 0, expirationDays+5)
 
 	assert.True(t, cert.NotAfter.Before(afterExpirationDate))
 	assert.True(t, beforeExpirationDate.Before(cert.NotAfter))
