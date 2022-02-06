@@ -62,7 +62,7 @@ func (c *clusterManagerImpl) CreateServerCertificate(name string) (*service.NewC
 		SubjectAlternativeNames: []string{name},
 	}
 
-	logging.GetLogger().Debugf("creating server certificate for %s\n", name)
+	logging.GetLogger().Debugf("creating server certificate for %s", name)
 	response, err := c.clusterCertService.CreateCertificate(request)
 	if err != nil {
 		return nil, err
@@ -82,7 +82,7 @@ func (c *clusterManagerImpl) CreateWorkerCertificate(name string) (*service.NewC
 		SubjectAlternativeNames: []string{name},
 	}
 
-	logging.GetLogger().Debugf("creating worker certificate for %s\n", name)
+	logging.GetLogger().Debugf("creating worker certificate for %s", name)
 	response, err := c.clusterCertService.CreateCertificate(request)
 	if err != nil {
 		return nil, err

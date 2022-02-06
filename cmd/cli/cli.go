@@ -1,11 +1,12 @@
 package cli
 
 import (
-	"os"
-
 	"github.com/spf13/cobra"
 	"go.uber.org/zap/zapcore"
 
+	"bilalekrem.com/certstore/cmd/cli/cluster"
+	"bilalekrem.com/certstore/cmd/cli/server"
+	"bilalekrem.com/certstore/cmd/cli/worker"
 	"bilalekrem.com/certstore/internal/logging"
 )
 
@@ -18,13 +19,16 @@ var (
 )
 
 func Run() {
+	addCommands()
+
 	logging.ChangeLogLevel(zapcore.DebugLevel)
 	rootCmd.Execute()
 }
 
 // ----
 
-func error(template string, args ...interface{}) {
-	logging.GetLogger().Errorf(template, args)
-	os.Exit(1)
+func addCommands() {
+	rootCmd.AddCommand(cluster.NewCommand())
+	rootCmd.AddCommand(worker.NewCommand())
+	rootCmd.AddCommand(server.NewCommand())
 }

@@ -18,7 +18,7 @@ const (
 )
 
 func NewService(t ServiceType, args map[string]string) service.CertificateService {
-	logging.GetLogger().Debugf("Creating new service with type [%s], with args: [%v]\n", t, args)
+	logging.GetLogger().Debugf("Creating new service with type [%s], with args: [%v]", t, args)
 
 	switch t {
 	case Simple:
