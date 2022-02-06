@@ -3,6 +3,7 @@ package cli
 import (
 	"runtime"
 
+	"bilalekrem.com/certstore/internal/cluster/manager"
 	wrk "bilalekrem.com/certstore/internal/cluster/worker"
 	"bilalekrem.com/certstore/internal/logging"
 	"github.com/spf13/cobra"
@@ -23,8 +24,13 @@ var clusterWorkerCreateCertCmd = &cobra.Command{
 
 		// ---
 
+		clusterManager, err := manager.NewFromFile(caKeyPath, caCertPath)
+		if err != nil {
+			error("error occurred: [%v]\n", err)
+		}
+
 		logging.GetLogger().Info("creating worker cert")
-		certificate, err := getCertstoreWithCA(caKeyPath, caCertPath).CreateWorkerCertificate(name)
+		certificate, err := clusterManager.CreateWorkerCertificate(name)
 		if err != nil {
 			error("error occurred: [%v]\n", err)
 		}

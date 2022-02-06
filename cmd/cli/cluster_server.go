@@ -6,6 +6,7 @@ import (
 
 	grpc_gen "bilalekrem.com/certstore/internal/certstore/grpc/gen"
 	grpc_service "bilalekrem.com/certstore/internal/certstore/grpc/service"
+	"bilalekrem.com/certstore/internal/cluster/manager"
 	"bilalekrem.com/certstore/internal/logging"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
@@ -29,8 +30,13 @@ var clusterServerCreateCertCmd = &cobra.Command{
 
 		// ---
 
+		clusterManager, err := manager.NewFromFile(caKeyPath, caCertPath)
+		if err != nil {
+			error("error occurred: [%v]\n", err)
+		}
+
 		logging.GetLogger().Info("creating server cert")
-		certificate, err := getCertstoreWithCA(caKeyPath, caCertPath).CreateServerCertificate(advertisedName)
+		certificate, err := clusterManager.CreateServerCertificate(advertisedName)
 		if err != nil {
 			error("error occurred: [%v]\n", err)
 		}

@@ -24,36 +24,6 @@ func init() {
 
 // ----
 
-func getCertstore() certstore.CertStore {
-	certStore, err := certstore.NewWithoutCA()
-	if err != nil {
-		error("Creation of certstore failed")
-	}
-
-	return certStore
-}
-
-func getCertstoreWithCA(caKeyPath string, caCertPath string) certstore.CertStore {
-	caCertPem, err := ioutil.ReadFile(caCertPath)
-	if err != nil {
-		error("Error occurred while reading ca cert: [%v]\n", err)
-	}
-
-	caKeyPem, err := ioutil.ReadFile(caKeyPath)
-	if err != nil {
-		error("Error occurred while reading ca cert: [%v]\n", err)
-	}
-
-	// ----
-
-	certStore, err := certstore.New(caKeyPem, caCertPem)
-	if err != nil {
-		error("Creation of certstore with CA failed, [%v]\n", err)
-	}
-
-	return certStore
-}
-
 func getCertstoreWithConfig(configPath string) certstore.CertStore {
 	config, err := config.ParseFile(configPath)
 	if err != nil {

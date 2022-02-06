@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"bilalekrem.com/certstore/internal/cluster/manager"
 	"bilalekrem.com/certstore/internal/logging"
 	"github.com/spf13/cobra"
 )
@@ -14,7 +15,13 @@ var clusterInitCmd = &cobra.Command{
 		// ---
 
 		logging.GetLogger().Infof("creating cluster CA, cluster name: [%s]", clusterName)
-		certificate, err := getCertstore().CreateClusterCACertificate(clusterName)
+
+		clusterManager, err := manager.NewForInitialization()
+		if err != nil {
+			error("error occurred: [%v]\n", err)
+		}
+
+		certificate, err := clusterManager.CreateClusterCACertificate(clusterName)
 		if err != nil {
 			error("error occurred: [%v]\n", err)
 		}

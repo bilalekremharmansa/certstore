@@ -5,17 +5,10 @@ import (
 
 	"bilalekrem.com/certstore/internal/assert"
 	certificate_service "bilalekrem.com/certstore/internal/certificate/service"
-	"bilalekrem.com/certstore/internal/certificate/x509utils"
+	"bilalekrem.com/certstore/internal/cluster/manager"
 	"bilalekrem.com/certstore/internal/testutils"
 	"github.com/golang/mock/gomock"
 )
-
-func TestCreateCertStore(t *testing.T) {
-	store, err := NewWithoutCA()
-	assert.NotError(t, err, "creating cert store failed")
-
-	assert.NotNil(t, store)
-}
 
 func TestCreateCertStoreWithCA(t *testing.T) {
 	pemCert := testutils.GetCAPem()
@@ -47,46 +40,6 @@ func TestCreateCertStoreWithUnvalidCAKey(t *testing.T) {
 	assert.Error(t, err, "provided cert key is invalid error expected")
 }
 
-func TestCreateCA(t *testing.T) {
-	store, _ := NewWithoutCA()
-	clusterName := "my-cluster"
-	certificate, err := store.CreateClusterCACertificate(clusterName)
-	assert.NotError(t, err, "cluster ca certificate could not be created")
-
-	// -----
-
-	cert, err := x509utils.ParsePemCertificate(certificate.Certificate)
-	assert.NotError(t, err, "certificate could not be parsed")
-
-	assert.True(t, cert.IsCA)
-	assert.EqualM(t, cert.Subject.CommonName, cert.Issuer.CommonName, "CA subject and issuer common name are different")
-	assert.Equal(t, clusterName, cert.Subject.CommonName)
-}
-
-func TestCreateServerCert(t *testing.T) {
-	store := createCertStore(t)
-	serverName := "my-server"
-	serverCertResponse, err := store.CreateServerCertificate(serverName)
-	assert.NotError(t, err, "server certificate could not be created")
-
-	serverCert, err := x509utils.ParsePemCertificate(serverCertResponse.Certificate)
-
-	assert.Equal(t, serverName, serverCert.Subject.CommonName)
-	assert.False(t, serverCert.IsCA)
-}
-
-func TestCreateWorkerCert(t *testing.T) {
-	store := createCertStore(t)
-	workerName := "my-worker"
-	workerCertResponse, err := store.CreateWorkerCertificate(workerName)
-	assert.NotError(t, err, "worker certificate could not be created")
-
-	workerCert, err := x509utils.ParsePemCertificate(workerCertResponse.Certificate)
-
-	assert.Equal(t, workerName, workerCert.Subject.CommonName)
-	assert.False(t, workerCert.IsCA)
-}
-
 func TestIssueCertificate(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -107,7 +60,7 @@ func TestIssueCertificate(t *testing.T) {
 
 	// ----
 
-	store, _ := NewWithoutCA()
+	store := createCertStore(t)
 	store.RegisterIssuer("first issuer", firstService)
 	store.RegisterIssuer("second issuer", secondService)
 
@@ -120,9 +73,9 @@ func TestIssueCertificate(t *testing.T) {
 // -----
 
 func createCertStore(t *testing.T) *certStoreImpl {
-	storeWithoutCA, _ := NewWithoutCA()
-	clusterName := "my-cluster"
-	caCert, err := storeWithoutCA.CreateClusterCACertificate(clusterName)
+	clusterManager, err := manager.NewForInitialization()
+	assert.NotError(t, err, "cluster manager could not be created")
+	caCert, err := clusterManager.CreateClusterCACertificate("test-cluster")
 	assert.NotError(t, err, "cluster ca certificate could not be created")
 
 	// -----
