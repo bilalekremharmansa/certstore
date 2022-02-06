@@ -8,10 +8,7 @@ import (
 )
 
 func TestParseConfig(t *testing.T) {
-	config, err := ParseYaml(`cluster:
-  private-key: cluster-private-key-file-path
-  certificate: cluster-certificate-file-path
-services:
+	config, err := ParseYaml(`services:
   - name: test-cert-service
     type: Simple
     args:
@@ -19,10 +16,6 @@ services:
       certificate: simple-certificate-file-path`)
 
 	assert.NotError(t, err, "error occurred while parsing yaml")
-
-	clusterConfig := config.ClusterConfig
-	assert.Equal(t, "cluster-certificate-file-path", clusterConfig.CertificatePath)
-	assert.Equal(t, "cluster-private-key-file-path", clusterConfig.PrivateKeyPath)
 
 	// -----
 

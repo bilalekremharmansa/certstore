@@ -5,39 +5,15 @@ import (
 
 	"bilalekrem.com/certstore/internal/assert"
 	certificate_service "bilalekrem.com/certstore/internal/certificate/service"
-	"bilalekrem.com/certstore/internal/cluster/manager"
-	"bilalekrem.com/certstore/internal/testutils"
+	"bilalekrem.com/certstore/internal/certstore/config"
 	"github.com/golang/mock/gomock"
 )
 
-func TestCreateCertStoreWithCA(t *testing.T) {
-	pemCert := testutils.GetCAPem()
-	pemPrivateKey := testutils.GetCAPrivateKey()
-
-	store, err := New([]byte(pemPrivateKey), []byte(pemCert))
-	assert.NotError(t, err, "creating cert store failed")
-
-	// --
-
+func TestCreateCertStoreWithConfig(t *testing.T) {
+	store := createWithConfig(t)
 	assert.NotNil(t, store)
-	assert.NotNil(t, store.clusterService)
-}
 
-func TestCreateCertStoreWithUnvalidCA(t *testing.T) {
-	pemCert := "invalid cert"
-	pemPrivateKey := testutils.GetCAPrivateKey()
-
-	_, err := New([]byte(pemPrivateKey), []byte(pemCert))
-
-	assert.Error(t, err, "provided cert is invalid error expected")
-}
-
-func TestCreateCertStoreWithUnvalidCAKey(t *testing.T) {
-	pemCert := testutils.GetCAPem()
-	pemPrivateKey := "invalid key"
-
-	_, err := New([]byte(pemPrivateKey), []byte(pemCert))
-	assert.Error(t, err, "provided cert key is invalid error expected")
+	assert.Equal(t, 1, len(store.certIssuers))
 }
 
 func TestIssueCertificate(t *testing.T) {
@@ -60,7 +36,7 @@ func TestIssueCertificate(t *testing.T) {
 
 	// ----
 
-	store := createCertStore(t)
+	store := createWithConfig(t)
 	store.RegisterIssuer("first issuer", firstService)
 	store.RegisterIssuer("second issuer", secondService)
 
@@ -72,16 +48,18 @@ func TestIssueCertificate(t *testing.T) {
 
 // -----
 
-func createCertStore(t *testing.T) *certStoreImpl {
-	clusterManager, err := manager.NewForInitialization()
-	assert.NotError(t, err, "cluster manager could not be created")
-	caCert, err := clusterManager.CreateClusterCACertificate("test-cluster")
-	assert.NotError(t, err, "cluster ca certificate could not be created")
+func createWithConfig(t *testing.T) *certStoreImpl {
+	configYaml := `services:
+  - name: test-cert-service
+    type: Simple
+    args:
+      private-key: simple-private-key-file-path
+      certificate: simple-certificate-file-path`
+	conf, err := config.ParseYaml(configYaml)
+	assert.NotError(t, err, "parsing certstore config failed")
 
-	// -----
-
-	store, err := New(caCert.PrivateKey, caCert.Certificate)
-	assert.NotError(t, err, "cluster certificate service could not be created")
+	store, err := NewFromConfig(conf)
+	assert.NotError(t, err, "parsing certstore config failed")
 
 	return store
 }

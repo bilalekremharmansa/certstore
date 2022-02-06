@@ -11,37 +11,13 @@ import (
 )
 
 type certStoreImpl struct {
-	clusterService service.CertificateService
 	certIssuers    map[string]service.CertificateService
 }
 
 // -------
 
-func New(caPrivateKeyPem []byte, caCertPem []byte) (*certStoreImpl, error) {
-	clusterService, err := service.New(caPrivateKeyPem, caCertPem)
-	if err != nil {
-		return nil, err
-	}
-
-	return &certStoreImpl{
-		clusterService: clusterService,
-		certIssuers:    make(map[string]service.CertificateService),
-	}, nil
-}
-
 func NewFromConfig(conf *config.Config) (*certStoreImpl, error) {
-	var clusterService service.CertificateService
-
-	clusterConfig := conf.ClusterConfig
-	if clusterConfig.CertificatePath != "" {
-		args := make(map[string]string)
-		args["private-key"] = clusterConfig.PrivateKeyPath
-		args["certificate"] = clusterConfig.CertificatePath
-		clusterService = factory.NewService(factory.Simple, args)
-	}
-
 	store := &certStoreImpl{
-		clusterService: clusterService,
 		certIssuers:    make(map[string]service.CertificateService),
 	}
 

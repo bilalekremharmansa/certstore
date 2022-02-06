@@ -12,13 +12,7 @@ import (
 )
 
 type Config struct {
-	ClusterConfig ClusterCertificateServiceConfig `yaml:"cluster"`
 	IssuerConfigs []CertificateServiceConfig      `yaml:"services"`
-}
-
-type ClusterCertificateServiceConfig struct {
-	PrivateKeyPath  string `yaml:"private-key"`
-	CertificatePath string `yaml:"certificate"`
 }
 
 type CertificateServiceConfig struct {
