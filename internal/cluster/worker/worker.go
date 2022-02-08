@@ -1,6 +1,8 @@
 package worker
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -19,6 +21,7 @@ import (
 	"bilalekrem.com/certstore/internal/pipeline/store"
 	"bilalekrem.com/certstore/internal/scheduler"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
 type Worker struct {
@@ -100,8 +103,13 @@ func validateConfig(conf *config.Config) error {
 func getCertificateServiceClient(conf *config.Config) (*certificate_service.CertificateServiceClient, error) {
 	serverAddress := conf.ServerAddr
 
-	opts := []grpc.DialOption{grpc.WithInsecure()}
-	conn, err := grpc.Dial(serverAddress, opts...)
+	tlsConf, err := createTlsConfig(conf)
+	if err != nil {
+		return nil, err
+	}
+
+	opts := grpc.WithTransportCredentials(credentials.NewTLS(tlsConf))
+	conn, err := grpc.Dial(serverAddress, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -109,6 +117,23 @@ func getCertificateServiceClient(conf *config.Config) (*certificate_service.Cert
 
 	client := certificate_service.NewCertificateServiceClient(conn)
 	return &client, nil
+}
+
+func createTlsConfig(conf *config.Config) (*tls.Config, error) {
+	caCertPem, err := ioutil.ReadFile(conf.TlsCACert)
+	if err != nil {
+		return nil, err
+	}
+	caPool := x509.NewCertPool()
+	if !caPool.AppendCertsFromPEM(caCertPem) {
+		return nil, fmt.Errorf("could not add ca cert to cert pool")
+	}
+
+	workerCertificate, _ := tls.LoadX509KeyPair(conf.TlsWorkerCert, conf.TlsWorkerCertKey)
+	return &tls.Config{
+		Certificates: []tls.Certificate{workerCertificate},
+		RootCAs:      caPool,
+	}, nil
 }
 
 func (w *Worker) init(conf *config.Config, actionStore *action.ActionStore) error {
