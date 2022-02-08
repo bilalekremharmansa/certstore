@@ -30,6 +30,10 @@ type Worker struct {
 }
 
 func NewFromFile(path string) (*Worker, error) {
+	return NewFromFileWithSkipJobInitialization(path, false)
+}
+
+func NewFromFileWithSkipJobInitialization(path string, skipJobInitialization bool) (*Worker, error) {
 	bytes, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, err
@@ -40,10 +44,10 @@ func NewFromFile(path string) (*Worker, error) {
 		return nil, err
 	}
 
-	return NewFromConfig(config)
+	return NewFromConfig(config, skipJobInitialization)
 }
 
-func NewFromConfig(conf *config.Config) (*Worker, error) {
+func NewFromConfig(conf *config.Config, skipJobInitialization bool) (*Worker, error) {
 	err := validateConfig(conf)
 	if err != nil {
 		return nil, err
@@ -66,7 +70,7 @@ func NewFromConfig(conf *config.Config) (*Worker, error) {
 	}
 
 	actionStore := getActionStore(certificateServiceClient, worker.pipelineStore)
-	worker.init(conf, actionStore)
+	worker.init(conf, actionStore, skipJobInitialization)
 
 	// ----
 
@@ -136,15 +140,19 @@ func createTlsConfig(conf *config.Config) (*tls.Config, error) {
 	}, nil
 }
 
-func (w *Worker) init(conf *config.Config, actionStore *action.ActionStore) error {
+func (w *Worker) init(conf *config.Config, actionStore *action.ActionStore, skipJobInitialization bool) error {
 	err := w.initPipelines(conf.Pipelines, actionStore)
 	if err != nil {
 		return err
 	}
 
-	err = w.initJobs(conf.Jobs)
-	if err != nil {
-		return err
+	if !skipJobInitialization {
+		err = w.initJobs(conf.Jobs)
+		if err != nil {
+			return err
+		}
+	} else {
+		logging.GetLogger().Infof("Job initialization is skipped")
 	}
 
 	return nil

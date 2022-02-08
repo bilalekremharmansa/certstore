@@ -92,3 +92,31 @@ func TestInitJobConfigFailUnknownPipeline(t *testing.T) {
 	err = worker.initJobs(jobConfigs)
 	assert.ErrorContains(t, err, "pipeline not found")
 }
+
+func TestSkipInitializationJobs(t *testing.T) {
+	pipelineConfigs := []pipeline.PipelineConfig{
+		{Name: "test-pipeline",
+			Actions: []pipeline.PipelineActionConfig{
+				{Name: "action-one"},
+			}},
+	}
+
+	actionStore := action.NewActionStore()
+	actionStore.Put("action-one", &action.MockAction{})
+
+	jobConfigs := []config.JobConfig{
+		{Name: "test job", Pipeline: "test-pipeline"},
+	}
+
+	conf := &config.Config{
+		Pipelines: pipelineConfigs,
+		Jobs:      jobConfigs,
+	}
+
+	worker := &Worker{
+		pipelineStore: store.New(),
+	}
+	err := worker.init(conf, actionStore, true)
+	assert.NotError(t, err, "worker creation failed")
+	assert.Nil(t, worker.jobs)
+}

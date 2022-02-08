@@ -16,7 +16,7 @@ func newRunPipelineCommand() *cobra.Command {
 
 			// -----
 
-			worker, err := wrk.NewFromFile(configPath)
+			worker, err := wrk.NewFromFileWithSkipJobInitialization(configPath, true)
 			cliutils.ValidateNotError(err)
 
 			// ---
