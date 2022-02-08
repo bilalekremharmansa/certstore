@@ -6,16 +6,13 @@ import (
 )
 
 type Config struct {
-	Cluster   ClusterConfig             `yaml:"cluster"`
-	Pipelines []pipeline.PipelineConfig `yaml:"pipelines"`
-	Jobs      []JobConfig               `yaml:"jobs"`
-}
-
-type ClusterConfig struct {
 	ServerAddr       string `yaml:"server-address"`
 	TlsCACert        string `yaml:"tls-ca-cert"`
 	TlsWorkerCert    string `yaml:"tls-worker-cert"`
 	TlsWorkerCertKey string `yaml:"tls-worker-cert-key"`
+
+	Pipelines []pipeline.PipelineConfig `yaml:"pipelines"`
+	Jobs      []JobConfig               `yaml:"jobs"`
 }
 
 type JobConfig struct {

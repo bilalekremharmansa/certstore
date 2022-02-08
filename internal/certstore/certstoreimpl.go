@@ -11,14 +11,14 @@ import (
 )
 
 type certStoreImpl struct {
-	certIssuers    map[string]service.CertificateService
+	certIssuers map[string]service.CertificateService
 }
 
 // -------
 
 func NewFromConfig(conf *config.Config) (*certStoreImpl, error) {
 	store := &certStoreImpl{
-		certIssuers:    make(map[string]service.CertificateService),
+		certIssuers: make(map[string]service.CertificateService),
 	}
 
 	// ------

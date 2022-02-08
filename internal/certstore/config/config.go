@@ -12,7 +12,7 @@ import (
 )
 
 type Config struct {
-	IssuerConfigs []CertificateServiceConfig      `yaml:"services"`
+	IssuerConfigs []CertificateServiceConfig `yaml:"services"`
 }
 
 type CertificateServiceConfig struct {

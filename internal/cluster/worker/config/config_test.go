@@ -7,11 +7,10 @@ import (
 )
 
 func TestParse(t *testing.T) {
-	configYaml := `cluster:
-  server-address: "addr:port"
-  tls-ca-cert: "ca-cert-path"
-  tls-worker-cert: "worker-cert-path"
-  tls-worker-cert-key: "worker-cert-key-path"
+	configYaml := `server-address: "addr:port"
+tls-ca-cert: "ca-cert-path"
+tls-worker-cert: "worker-cert-path"
+tls-worker-cert-key: "worker-cert-key-path"
 pipelines:
   - name: first-pipeline
     actions:
@@ -33,11 +32,10 @@ jobs:
 
 	// ----
 
-	clusterConfig := config.Cluster
-	assert.Equal(t, "addr:port", clusterConfig.ServerAddr)
-	assert.Equal(t, "ca-cert-path", clusterConfig.TlsCACert)
-	assert.Equal(t, "worker-cert-path", clusterConfig.TlsWorkerCert)
-	assert.Equal(t, "worker-cert-key-path", clusterConfig.TlsWorkerCertKey)
+	assert.Equal(t, "addr:port", config.ServerAddr)
+	assert.Equal(t, "ca-cert-path", config.TlsCACert)
+	assert.Equal(t, "worker-cert-path", config.TlsWorkerCert)
+	assert.Equal(t, "worker-cert-key-path", config.TlsWorkerCertKey)
 
 	// -----
 

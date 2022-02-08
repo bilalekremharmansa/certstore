@@ -41,6 +41,13 @@ func NewFromFile(path string) (*Worker, error) {
 }
 
 func NewFromConfig(conf *config.Config) (*Worker, error) {
+	err := validateConfig(conf)
+	if err != nil {
+		return nil, err
+	}
+
+	// ----
+
 	worker := &Worker{
 		pipelineStore: store.New(),
 		jobs:          []job.Job{},
@@ -49,7 +56,7 @@ func NewFromConfig(conf *config.Config) (*Worker, error) {
 	// ----
 
 	logging.GetLogger().Info("creating certificate service client for action store")
-	certificateServiceClient, err := getCertificateServiceClient(&conf.Cluster)
+	certificateServiceClient, err := getCertificateServiceClient(conf)
 	if err != nil {
 		logging.GetLogger().Errorf("creating cert service client faild, %v", err)
 		return nil, err
@@ -76,10 +83,22 @@ func (w *Worker) RunPipeline(pipelineName string) error {
 
 // ----
 
-func getCertificateServiceClient(conf *config.ClusterConfig) (*certificate_service.CertificateServiceClient, error) {
-	serverAddress := conf.ServerAddr
+func validateConfig(conf *config.Config) error {
+	if conf.ServerAddr == "" {
+		return fmt.Errorf("server-address is required argument")
+	} else if conf.TlsCACert == "" {
+		return fmt.Errorf("tls-ca-cert is required argument")
+	} else if conf.TlsWorkerCert == "" {
+		return fmt.Errorf("tls-worker-cert is required argument")
+	} else if conf.TlsWorkerCertKey == "" {
+		return fmt.Errorf("tls-worker-cert-key is required argument")
+	}
 
-	// ---
+	return nil
+}
+
+func getCertificateServiceClient(conf *config.Config) (*certificate_service.CertificateServiceClient, error) {
+	serverAddress := conf.ServerAddr
 
 	opts := []grpc.DialOption{grpc.WithInsecure()}
 	conn, err := grpc.Dial(serverAddress, opts...)
