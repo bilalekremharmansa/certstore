@@ -31,7 +31,7 @@ func New(email string, privateKeyPath string, providerName string) (*letsEncrypt
 	_, err = os.OpenFile(privateKeyPath, os.O_RDONLY, 0666)
 	if errors.Is(err, os.ErrNotExist) {
 		logging.GetLogger().Warn("acme user private key path is not found, generating a new user")
-		adapter, err = lego.NewAdapterWithNewUserRegistration(email, privateKeyPath, provider, real_lego.LEDirectoryStaging)
+		adapter, err = lego.NewAdapterWithNewUserRegistration(email, privateKeyPath, provider, real_lego.LEDirectoryProduction)
 		if err != nil {
 			return nil, err
 		}
@@ -41,7 +41,7 @@ func New(email string, privateKeyPath string, providerName string) (*letsEncrypt
 			return nil, err
 		}
 
-		adapter, err = lego.NewAdapter(user, provider, real_lego.LEDirectoryStaging)
+		adapter, err = lego.NewAdapter(user, provider, real_lego.LEDirectoryProduction)
 		if err != nil {
 			return nil, err
 		}

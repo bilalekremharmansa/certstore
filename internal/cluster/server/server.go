@@ -63,8 +63,8 @@ func NewFromConfig(conf *config.Config) (*Server, error) {
 }
 
 func (s *Server) Serve() error {
-	logging.GetLogger().Debugf("Starting to listening on localhost:%d", s.listenPort)
-	listen, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", s.listenPort))
+	logging.GetLogger().Debugf("Starting to listening on 0.0.0.0:%d", s.listenPort)
+	listen, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%d", s.listenPort))
 	if err != nil {
 		return fmt.Errorf("error occurred while listening port, %v", err)
 	}

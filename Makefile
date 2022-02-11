@@ -5,7 +5,7 @@ export
 
 define build_go_file
 	GOOS=windows GOARCH=amd64 go build -o build/certstore.exe cmd/main.go
-	GOOS=linux go build -o build/cerstore cmd/main.go
+	GOOS=linux GOARCH=amd64 go build -o build/certstore cmd/main.go
 endef
 
 generate-proto:
