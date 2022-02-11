@@ -30,7 +30,7 @@ run-server:
 	go run cmd/main.go server start --config $(SERVER_CONFIG_PATH)
 
 run-pipeline:
-	go run cmd/main.go worker runPipeline --config $(WORKER_CONFIG_PATH) --pipeline $(WORKER_PIPELINE_TO_RUN)
+	go run cmd/main.go agent runPipeline --config $(AGENT_CONFIG_PATH) --pipeline $(AGENT_PIPELINE_TO_RUN)
 
-run-worker:
-	go run cmd/main.go worker start --config $(WORKER_CONFIG_PATH)
+run-agent:
+	go run cmd/main.go agent start --config $(AGENT_CONFIG_PATH)

@@ -20,7 +20,7 @@ Two files will be created: CA `certificate` and `private key`.
 
 ### Server 
 
-Now it's time to create server certificate. Server will use this certificate to enable mTLS in gRPC service. It is important in here to create server certificate with cluster CA. Server and agent will trust each others certificate, since both server and worker certificates are created and signed by same cluster certificate.
+Now it's time to create server certificate. Server will use this certificate to enable mTLS in gRPC service. It is important in here to create server certificate with cluster CA. Server and agent will trust each others certificate, since both server and agent certificates are created and signed by same cluster certificate.
 
 ```
 $ certstore cluster certificate --cacert ../ca.crt --cakey ../ca.key --name certstore-server --type server
@@ -62,23 +62,23 @@ $ certstore server start --config server.yaml
 Agents also needs a certificate, which should be signed by same cluster CA. Agent will use this certificate to enable mTLS while requesting to server.
 
 ```
-$ certstore cluster certificate --cacert ../ca.crt --cakey ../ca.key --name certstore-worker --type worker
+$ certstore cluster certificate --cacert ../ca.crt --cakey ../ca.key --name certstore-agent --type agent
 ```
 
-This will create `worker.crt` and `worker.key`
+This will create `agent.crt` and `agent.key`
 
 ```
-├── worker.crt
-└── worker.key
+├── agent.crt
+└── agent.key
 ```
 
-Worker configuration `worker.yaml`:
+agent configuration `agent.yaml`:
 
 ```
 server-address: "certstore-server:10000"
 tls-ca-cert: "./ca.crt"
-tls-worker-cert: "./worker.crt"
-tls-worker-cert-key: "./worker.key"
+tls-agent-cert: "./agent.crt"
+tls-agent-cert-key: "./agent.key"
 pipelines:
   - name: "renew certificate"
     actions:
@@ -113,11 +113,11 @@ IP_ADDRESS_OF_SERVER certstore-server
 Run a pipeline with the following command. This will issue a certificate by requesting server.
 
 ```
-$ certstore worker runPipeline --config worker.yaml --pipeline renew certificate
+$ certstore agent runPipeline --config agent.yaml --pipeline renew certificate
 ```
 
 We can start agent, which agent will schedule and start jobs in this mode.
 
 ```
-$ certstore worker start --config worker.yaml
+$ certstore agent start --config agent.yaml
 ```
