@@ -1,4 +1,4 @@
-package worker
+package agent
 
 import (
 	"crypto/tls"
@@ -8,7 +8,7 @@ import (
 	"io/ioutil"
 
 	certificate_service "bilalekrem.com/certstore/internal/certstore/grpc/gen"
-	"bilalekrem.com/certstore/internal/cluster/worker/config"
+	"bilalekrem.com/certstore/internal/cluster/agent/config"
 	"bilalekrem.com/certstore/internal/job"
 	"bilalekrem.com/certstore/internal/logging"
 	"bilalekrem.com/certstore/internal/pipeline"
@@ -24,16 +24,16 @@ import (
 	"google.golang.org/grpc/credentials"
 )
 
-type Worker struct {
+type Agent struct {
 	pipelineStore *store.PipelineStore
 	jobs          []job.Job
 }
 
-func NewFromFile(path string) (*Worker, error) {
+func NewFromFile(path string) (*Agent, error) {
 	return NewFromFileWithSkipJobInitialization(path, false)
 }
 
-func NewFromFileWithSkipJobInitialization(path string, skipJobInitialization bool) (*Worker, error) {
+func NewFromFileWithSkipJobInitialization(path string, skipJobInitialization bool) (*Agent, error) {
 	bytes, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, err
@@ -47,7 +47,7 @@ func NewFromFileWithSkipJobInitialization(path string, skipJobInitialization boo
 	return NewFromConfig(config, skipJobInitialization)
 }
 
-func NewFromConfig(conf *config.Config, skipJobInitialization bool) (*Worker, error) {
+func NewFromConfig(conf *config.Config, skipJobInitialization bool) (*Agent, error) {
 	err := validateConfig(conf)
 	if err != nil {
 		return nil, err
@@ -55,7 +55,7 @@ func NewFromConfig(conf *config.Config, skipJobInitialization bool) (*Worker, er
 
 	// ----
 
-	worker := &Worker{
+	agent := &Agent{
 		pipelineStore: store.New(),
 		jobs:          []job.Job{},
 	}
@@ -69,15 +69,15 @@ func NewFromConfig(conf *config.Config, skipJobInitialization bool) (*Worker, er
 		return nil, err
 	}
 
-	actionStore := getActionStore(certificateServiceClient, worker.pipelineStore)
-	worker.init(conf, actionStore, skipJobInitialization)
+	actionStore := getActionStore(certificateServiceClient, agent.pipelineStore)
+	agent.init(conf, actionStore, skipJobInitialization)
 
 	// ----
 
-	return worker, nil
+	return agent, nil
 }
 
-func (w *Worker) RunPipeline(pipelineName string) error {
+func (w *Agent) RunPipeline(pipelineName string) error {
 	logging.GetLogger().Errorf("Running pipeline, %s", pipelineName)
 	pip := w.pipelineStore.GetPipeline(pipelineName)
 	if pip == nil {
@@ -95,10 +95,10 @@ func validateConfig(conf *config.Config) error {
 		return fmt.Errorf("server-address is required argument")
 	} else if conf.TlsCACert == "" {
 		return fmt.Errorf("tls-ca-cert is required argument")
-	} else if conf.TlsWorkerCert == "" {
-		return fmt.Errorf("tls-worker-cert is required argument")
-	} else if conf.TlsWorkerCertKey == "" {
-		return fmt.Errorf("tls-worker-cert-key is required argument")
+	} else if conf.TlsAgentCert == "" {
+		return fmt.Errorf("tls-agent-cert is required argument")
+	} else if conf.TlsAgentCertKey == "" {
+		return fmt.Errorf("tls-agent-cert-key is required argument")
 	}
 
 	return nil
@@ -133,14 +133,14 @@ func createTlsConfig(conf *config.Config) (*tls.Config, error) {
 		return nil, fmt.Errorf("could not add ca cert to cert pool")
 	}
 
-	workerCertificate, _ := tls.LoadX509KeyPair(conf.TlsWorkerCert, conf.TlsWorkerCertKey)
+	agentCertificate, _ := tls.LoadX509KeyPair(conf.TlsAgentCert, conf.TlsAgentCertKey)
 	return &tls.Config{
-		Certificates: []tls.Certificate{workerCertificate},
+		Certificates: []tls.Certificate{agentCertificate},
 		RootCAs:      caPool,
 	}, nil
 }
 
-func (w *Worker) init(conf *config.Config, actionStore *action.ActionStore, skipJobInitialization bool) error {
+func (w *Agent) init(conf *config.Config, actionStore *action.ActionStore, skipJobInitialization bool) error {
 	err := w.initPipelines(conf.Pipelines, actionStore)
 	if err != nil {
 		return err
@@ -158,8 +158,8 @@ func (w *Worker) init(conf *config.Config, actionStore *action.ActionStore, skip
 	return nil
 }
 
-func (w *Worker) initPipelines(pipelineConfigs []pipeline.PipelineConfig, actionStore *action.ActionStore) error {
-	logging.GetLogger().Info("Initializing worker with pipeline configs..")
+func (w *Agent) initPipelines(pipelineConfigs []pipeline.PipelineConfig, actionStore *action.ActionStore) error {
+	logging.GetLogger().Info("Initializing agent with pipeline configs..")
 	for _, pipelineConfig := range pipelineConfigs {
 		pip, err := pipeline.NewFromConfig(&pipelineConfig, actionStore)
 		if err != nil {
@@ -174,8 +174,8 @@ func (w *Worker) initPipelines(pipelineConfigs []pipeline.PipelineConfig, action
 	return nil
 }
 
-func (w *Worker) initJobs(jobConfigs []config.JobConfig) error {
-	logging.GetLogger().Info("Initializing worker with job configs..")
+func (w *Agent) initJobs(jobConfigs []config.JobConfig) error {
+	logging.GetLogger().Info("Initializing agent with job configs..")
 	for _, jobConfig := range jobConfigs {
 		dailyScheduler := scheduler.NewDailyScheduler()
 

@@ -1,4 +1,4 @@
-package worker
+package agent
 
 import (
 	"github.com/spf13/cobra"
@@ -6,8 +6,8 @@ import (
 
 func NewCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "worker",
-		Short: "manage worker",
+		Use:   "agent",
+		Short: "manage agent",
 	}
 
 	// ----

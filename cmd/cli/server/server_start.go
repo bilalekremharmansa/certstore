@@ -22,7 +22,7 @@ func newStartCommand() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().String("config", "", "worker config file path")
+	cmd.Flags().String("config", "", "agent config file path")
 	cmd.MarkFlagRequired("config")
 	return cmd
 }

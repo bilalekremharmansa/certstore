@@ -71,9 +71,9 @@ func (c *clusterManagerImpl) CreateServerCertificate(name string) (*service.NewC
 	return response, nil
 }
 
-func (c *clusterManagerImpl) CreateWorkerCertificate(name string) (*service.NewCertificateResponse, error) {
+func (c *clusterManagerImpl) CreateAgentCertificate(name string) (*service.NewCertificateResponse, error) {
 	if c.clusterCertService == nil {
-		return nil, errors.New("CA required to create and sign worker ecertificates")
+		return nil, errors.New("CA required to create and sign agent ecertificates")
 	}
 
 	request := &service.NewCertificateRequest{
@@ -82,7 +82,7 @@ func (c *clusterManagerImpl) CreateWorkerCertificate(name string) (*service.NewC
 		SubjectAlternativeNames: []string{name},
 	}
 
-	logging.GetLogger().Debugf("creating worker certificate for %s", name)
+	logging.GetLogger().Debugf("creating agent certificate for %s", name)
 	response, err := c.clusterCertService.CreateCertificate(request)
 	if err != nil {
 		return nil, err

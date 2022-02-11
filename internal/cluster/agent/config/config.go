@@ -8,8 +8,8 @@ import (
 type Config struct {
 	ServerAddr       string `yaml:"server-address"`
 	TlsCACert        string `yaml:"tls-ca-cert"`
-	TlsWorkerCert    string `yaml:"tls-worker-cert"`
-	TlsWorkerCertKey string `yaml:"tls-worker-cert-key"`
+	TlsAgentCert    string `yaml:"tls-agent-cert"`
+	TlsAgentCertKey string `yaml:"tls-agent-cert-key"`
 
 	Pipelines []pipeline.PipelineConfig `yaml:"pipelines"`
 	Jobs      []JobConfig               `yaml:"jobs"`

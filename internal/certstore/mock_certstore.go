@@ -64,19 +64,19 @@ func (mr *MockCertStoreMockRecorder) CreateServerCertificate(advertisedServerNam
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateServerCertificate", reflect.TypeOf((*MockCertStore)(nil).CreateServerCertificate), advertisedServerName)
 }
 
-// CreateWorkerCertificate mocks base method.
-func (m *MockCertStore) CreateWorkerCertificate(address string) (*service.NewCertificateResponse, error) {
+// CreateAgentCertificate mocks base method.
+func (m *MockCertStore) CreateAgentCertificate(address string) (*service.NewCertificateResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateWorkerCertificate", address)
+	ret := m.ctrl.Call(m, "CreateAgentCertificate", address)
 	ret0, _ := ret[0].(*service.NewCertificateResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// CreateWorkerCertificate indicates an expected call of CreateWorkerCertificate.
-func (mr *MockCertStoreMockRecorder) CreateWorkerCertificate(address interface{}) *gomock.Call {
+// CreateAgentCertificate indicates an expected call of CreateAgentCertificate.
+func (mr *MockCertStoreMockRecorder) CreateAgentCertificate(address interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateWorkerCertificate", reflect.TypeOf((*MockCertStore)(nil).CreateWorkerCertificate), address)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateAgentCertificate", reflect.TypeOf((*MockCertStore)(nil).CreateAgentCertificate), address)
 }
 
 // IssueCertificate mocks base method.

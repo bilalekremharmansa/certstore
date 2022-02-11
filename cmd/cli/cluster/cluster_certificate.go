@@ -11,15 +11,15 @@ import (
 func newCertificateCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "certificate",
-		Short: "creates server or worker certificate",
+		Short: "creates server or agent certificate",
 		Run: func(cmd *cobra.Command, args []string) {
 			certType, _ := cmd.Flags().GetString("type")
 			certName, _ := cmd.Flags().GetString("name")
 			caCertPath, _ := cmd.Flags().GetString("cacert")
 			caKeyPath, _ := cmd.Flags().GetString("cakey")
 
-			if certType != "server" && certType != "worker" {
-				cliutils.Error("cert type should be either server or worker")
+			if certType != "server" && certType != "agent" {
+				cliutils.Error("cert type should be either server or agent")
 			}
 
 			// ---
@@ -30,7 +30,7 @@ func newCertificateCommand() *cobra.Command {
 
 	// ----
 
-	cmd.Flags().String("type", "", "type of certificate, possible args: [server,worker]")
+	cmd.Flags().String("type", "", "type of certificate, possible args: [server,agent]")
 	cmd.Flags().String("name", "", "common name of certificate")
 	cmd.Flags().String("cacert", "", "cluster certificate authority file path in PEM format")
 	cmd.Flags().String("cakey", "", "cluster certificate authority key file path in PEM format")
@@ -52,7 +52,7 @@ func createAndSaveCert(certType string, name string, caCertPath string, caKeyPat
 		certificate, err = clusterManager.CreateServerCertificate(name)
 		cliutils.ValidateNotError(err)
 	} else {
-		certificate, err = clusterManager.CreateWorkerCertificate(name)
+		certificate, err = clusterManager.CreateAgentCertificate(name)
 		cliutils.ValidateNotError(err)
 	}
 

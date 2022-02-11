@@ -36,16 +36,16 @@ func TestCreateServerCert(t *testing.T) {
 	assert.False(t, serverCert.IsCA)
 }
 
-func TestCreateWorkerCert(t *testing.T) {
+func TestCreateAgentCert(t *testing.T) {
 	clusterManager := createClusterManagerWithCA(t)
-	workerName := "my-worker"
-	workerCertResponse, err := clusterManager.CreateWorkerCertificate(workerName)
-	assert.NotError(t, err, "worker certificate could not be created")
+	agentName := "my-agent"
+	agentCertResponse, err := clusterManager.CreateAgentCertificate(agentName)
+	assert.NotError(t, err, "agent certificate could not be created")
 
-	workerCert, err := x509utils.ParsePemCertificate(workerCertResponse.Certificate)
+	agentCert, err := x509utils.ParsePemCertificate(agentCertResponse.Certificate)
 
-	assert.Equal(t, workerName, workerCert.Subject.CommonName)
-	assert.False(t, workerCert.IsCA)
+	assert.Equal(t, agentName, agentCert.Subject.CommonName)
+	assert.False(t, agentCert.IsCA)
 }
 
 func createClusterManagerWithCA(t *testing.T) ClusterManager {

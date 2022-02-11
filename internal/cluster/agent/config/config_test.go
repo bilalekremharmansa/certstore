@@ -9,8 +9,8 @@ import (
 func TestParse(t *testing.T) {
 	configYaml := `server-address: "addr:port"
 tls-ca-cert: "ca-cert-path"
-tls-worker-cert: "worker-cert-path"
-tls-worker-cert-key: "worker-cert-key-path"
+tls-agent-cert: "agent-cert-path"
+tls-agent-cert-key: "agent-cert-key-path"
 pipelines:
   - name: first-pipeline
     actions:
@@ -34,8 +34,8 @@ jobs:
 
 	assert.Equal(t, "addr:port", config.ServerAddr)
 	assert.Equal(t, "ca-cert-path", config.TlsCACert)
-	assert.Equal(t, "worker-cert-path", config.TlsWorkerCert)
-	assert.Equal(t, "worker-cert-key-path", config.TlsWorkerCertKey)
+	assert.Equal(t, "agent-cert-path", config.TlsAgentCert)
+	assert.Equal(t, "agent-cert-key-path", config.TlsAgentCertKey)
 
 	// -----
 

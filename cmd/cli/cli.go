@@ -6,7 +6,7 @@ import (
 
 	"bilalekrem.com/certstore/cmd/cli/cluster"
 	"bilalekrem.com/certstore/cmd/cli/server"
-	"bilalekrem.com/certstore/cmd/cli/worker"
+	"bilalekrem.com/certstore/cmd/cli/agent"
 	"bilalekrem.com/certstore/internal/logging"
 )
 
@@ -29,6 +29,6 @@ func Run() {
 
 func addCommands() {
 	rootCmd.AddCommand(cluster.NewCommand())
-	rootCmd.AddCommand(worker.NewCommand())
+	rootCmd.AddCommand(agent.NewCommand())
 	rootCmd.AddCommand(server.NewCommand())
 }
