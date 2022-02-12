@@ -22,7 +22,7 @@ func TestShouldNotRenewCertificate(t *testing.T) {
 		NotAfter:  time.Now().AddDate(0, 0, daysToExpire),
 	}
 
-	shouldRenew := shouldRenewCertificate(cert)
+	shouldRenew := shouldRenewCertificate(cert, DEFAULT_ACCEPTABLE_NUM_OF_DAYS_TO_EXPIRE)
 	assert.False(t, shouldRenew)
 }
 
@@ -32,7 +32,7 @@ func TestShouldRenewCertificateAlreadyExpired(t *testing.T) {
 		NotAfter:  time.Now().AddDate(0, 0, -8),
 	}
 
-	shouldRenew := shouldRenewCertificate(cert)
+	shouldRenew := shouldRenewCertificate(cert, DEFAULT_ACCEPTABLE_NUM_OF_DAYS_TO_EXPIRE)
 	assert.True(t, shouldRenew)
 }
 
@@ -43,7 +43,7 @@ func TestShouldRenewCertificate(t *testing.T) {
 		NotAfter:  time.Now().AddDate(0, 0, daysToExpire),
 	}
 
-	shouldRenew := shouldRenewCertificate(cert)
+	shouldRenew := shouldRenewCertificate(cert, DEFAULT_ACCEPTABLE_NUM_OF_DAYS_TO_EXPIRE)
 	assert.True(t, shouldRenew)
 }
 
@@ -52,6 +52,23 @@ func TestRequiredArgumentCertificatePath(t *testing.T) {
 
 	err := NewShouldRenewCertificateAction().Run(nil, args)
 	assert.ErrorContains(t, err, "required argument")
+}
+
+func TestNumOfDaysBeforeExpire(t *testing.T) {
+	args := make(map[string]string)
+	args[ARGS_RENEW_X_DAYS_BEFORE_EXPIRE] = "10"
+
+	numOfDaysBeforeExpire, err := getNumOfDaysBeforeExpire(args)
+	assert.NotError(t, err, "getting num of days before expire failed")
+	assert.Equal(t, 10, numOfDaysBeforeExpire)
+}
+
+func TestNumOfDaysBeforeExpireNotNumber(t *testing.T) {
+	args := make(map[string]string)
+	args[ARGS_RENEW_X_DAYS_BEFORE_EXPIRE] = "ten"
+
+	_, err := getNumOfDaysBeforeExpire(args)
+	assert.Error(t, err, "expected number, not string")
 }
 
 func TestRun(t *testing.T) {

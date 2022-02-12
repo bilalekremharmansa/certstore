@@ -4,6 +4,7 @@ import (
 	"crypto/x509"
 	"errors"
 	"io/ioutil"
+	"strconv"
 	"time"
 
 	"bilalekrem.com/certstore/internal/certificate/x509utils"
@@ -13,10 +14,11 @@ import (
 )
 
 const (
-	ARGS_CERTIFICATE_PATH string = "certificate-path"
+	ARGS_CERTIFICATE_PATH           string = "certificate-path"
+	ARGS_RENEW_X_DAYS_BEFORE_EXPIRE string = "renew-before-expire-days"
 
 	// will be used to decide renew certificate, if certificate will expire in {ACCEPTABLE_NUM_OF_DAYS_TO_EXPIRE} days
-	ACCEPTABLE_NUM_OF_DAYS_TO_EXPIRE = 25
+	DEFAULT_ACCEPTABLE_NUM_OF_DAYS_TO_EXPIRE = 25
 )
 
 type shouldRenewCertificateAction struct {
@@ -43,8 +45,12 @@ func (a shouldRenewCertificateAction) Run(ctx *context.Context, args map[string]
 	}
 
 	// ----
-
-	shouldRenew := shouldRenewCertificate(certificate)
+	daysBeforeExpire, err := getNumOfDaysBeforeExpire(args)
+	if err != nil {
+		logging.GetLogger().Infof("extracting num of days to expire failed, %v", err)
+		return nil
+	}
+	shouldRenew := shouldRenewCertificate(certificate, daysBeforeExpire)
 	if shouldRenew {
 		logging.GetLogger().Error("certificate should be renewed")
 		return nil
@@ -76,11 +82,25 @@ func loadCertificate(certicatePath string) (*x509.Certificate, error) {
 	return certificate, nil
 }
 
-func shouldRenewCertificate(cert *x509.Certificate) bool {
+func getNumOfDaysBeforeExpire(args map[string]string) (int, error) {
+	daysBeforeExpireStr, exist := args[ARGS_RENEW_X_DAYS_BEFORE_EXPIRE]
+	if exist {
+		daysBeforeExpire, err := strconv.Atoi(daysBeforeExpireStr)
+		if err != nil {
+			return 0, err
+		}
+
+		return daysBeforeExpire, nil
+	}
+
+	return DEFAULT_ACCEPTABLE_NUM_OF_DAYS_TO_EXPIRE, nil
+}
+
+func shouldRenewCertificate(cert *x509.Certificate, acceptableDaysBeforeExpire int) bool {
 	now := time.Now()
 	certificateExpireDate := cert.NotAfter
 
 	daysBetween := certificateExpireDate.Sub(now).Hours() / 24
 	logging.GetLogger().Infof("days between expiration date and now: [%f]", daysBetween)
-	return (daysBetween <= ACCEPTABLE_NUM_OF_DAYS_TO_EXPIRE)
+	return (daysBetween <= float64(acceptableDaysBeforeExpire))
 }
